@@ -1,0 +1,545 @@
+/* ── TOKENS (same as index.html) ── */
+:root {
+    --blue: #0B5ED7;
+    --gold: #f4b400;
+    --dark: #0b1f3a;
+    --surface: #f4f7fc;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --border: #d6e2f5;
+    --error: #dc3545;
+
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(11, 94, 215, .10);
+}
+
+/* JS removes this class on load; keeps the page invisible until JS has
+   stamped applicant_id fields and pre-filled the form. */
+.hidden {
+    display: none !important;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--dark);
+    min-height: 100vh;
+}
+
+/* ── BACKGROUND PATTERN (same as index.html) ── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26, 107, 60, .13) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(201, 151, 58, .10) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.application-page {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+/* ── TOP NAV ── */
+.topbar {
+    height: 68px;
+    background: var(--card);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    background: var(--blue);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.brand-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+    color: var(--blue);
+    line-height: 1.1;
+}
+
+.brand-sub {
+    font-size: .75rem;
+    color: var(--muted);
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.print-btn,
+.logout-btn {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .85rem;
+    font-weight: 600;
+    transition: opacity .2s;
+}
+
+.print-btn:hover,
+.logout-btn:hover {
+    opacity: .85;
+}
+
+.print-btn {
+    background: var(--blue);
+    color: white;
+}
+
+.logout-btn {
+    background: var(--gold);
+    color: white;
+}
+
+/* ── PAGE WRAPPER ── */
+.application-wrapper {
+    width: 78%;
+    margin: 28px auto;
+}
+
+/* ── PROFILE CARD ── */
+.profile-card {
+    background: var(--blue);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 60% 80% at 90% 50%, rgba(201, 151, 58, .25) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 10% 20%, rgba(255, 255, 255, .07) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.profile-left,
+.profile-right {
+    position: relative;
+    z-index: 2;
+}
+
+.profile-left img {
+    width: 110px;
+    height: 110px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, .35);
+    background: rgba(255, 255, 255, .15);
+}
+
+.profile-right h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    line-height: 1.15;
+    margin-bottom: 10px;
+}
+
+.profile-right p {
+    font-size: .85rem;
+    opacity: .85;
+    margin-top: 4px;
+}
+
+/* ── ACCORDION ── */
+.accordion-container {
+    margin: 20px 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.accordion-item {
+    border-bottom: 1px solid var(--border);
+}
+
+.accordion-item:last-child {
+    border-bottom: none;
+}
+
+.accordion-header {
+    width: 100%;
+    background: var(--card);
+    border: none;
+    color: var(--dark);
+    padding: 18px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.accordion-header:hover {
+    background: var(--surface);
+}
+
+.accordion-chevron {
+    color: var(--muted);
+    font-size: 1.1rem;
+    transition: transform .25s;
+}
+
+.accordion-header.open .accordion-chevron {
+    transform: rotate(180deg);
+}
+
+.step-badge {
+    background: var(--blue);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-right: 12px;
+    letter-spacing: .02em;
+}
+
+.step-badge.gold {
+    background: var(--gold);
+}
+
+.step-badge.red {
+    background: var(--error);
+}
+
+.accordion-content {
+    display: none;
+    background: var(--card);
+    padding: 28px 32px;
+    border-top: 1px solid var(--border);
+}
+
+.accordion-content.show {
+    display: block;
+    animation: fadeIn .2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── SECTION HEADINGS ── */
+.accordion-content h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.25rem;
+    color: var(--blue);
+    margin-bottom: 4px;
+}
+
+.section-desc {
+    font-size: .83rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 22px 0;
+}
+
+/* ── FORM ELEMENTS ── */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    background: var(--surface);
+    color: var(--dark);
+    outline: none;
+    transition: border-color .2s, background .2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--blue);
+    background: #fff;
+}
+
+.form-group span {
+    font-size: .76rem;
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+/* ── RADIO GRID ── */
+.radio-grid {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.radio-grid label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    min-width: 140px;
+    padding: 12px 18px;
+
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+
+    cursor: pointer;
+
+    font-size: .92rem;
+    font-weight: 500;
+
+    transition:
+        border-color .2s,
+        background .2s,
+        transform .15s;
+}
+
+.radio-grid label:hover {
+    border-color: var(--blue);
+    transform: translateY(-1px);
+}
+
+.radio-grid label:has(input:checked) {
+    border-color: var(--blue);
+    background: rgba(11, 94, 215, .08);
+}
+
+.radio-grid input[type="radio"] {
+    accent-color: var(--blue);
+    cursor: pointer;
+    zoom: 1.15;
+}
+
+/* ── FOOTER ACTIONS ── */
+.form-footer,
+.footer-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-footer p,
+.footer-actions p {
+    font-size: .82rem;
+    color: var(--muted);
+}
+
+.save-btn {
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+}
+
+.save-btn:hover {
+    opacity: .88;
+}
+
+/* ── UPLOAD CARDS ── */
+.upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.upload-card {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    background: var(--surface);
+    transition: border-color .2s;
+}
+
+.upload-card:hover {
+    border-color: var(--blue);
+}
+
+/* ── SUBMIT / VALIDATION ── */
+.submit-alert {
+    background: rgba(201, 151, 58, .08);
+    border: 1.5px solid rgba(201, 151, 58, .35);
+    padding: 20px 24px;
+    border-radius: var(--radius);
+}
+
+.submit-alert h3 {
+    font-family: 'DM Serif Display', serif;
+    color: var(--dark);
+    margin-bottom: 12px;
+}
+
+.submit-alert ul {
+    padding-left: 18px;
+    font-size: .88rem;
+    color: var(--muted);
+    line-height: 1.9;
+}
+
+.submit-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.draft-btn,
+.final-submit-btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+}
+
+.draft-btn:hover,
+.final-submit-btn:hover {
+    opacity: .88;
+}
+
+.draft-btn {
+    background: var(--border);
+    color: var(--dark);
+}
+
+.final-submit-btn {
+    background: var(--blue);
+    color: white;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+    .application-wrapper {
+        width: 95%;
+    }
+
+    .profile-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-right h1 {
+        font-size: 1.6rem;
+    }
+
+    .accordion-header {
+        font-size: .92rem;
+    }
+
+    .topbar {
+        padding: 0 16px;
+    }
+}
+/* ── REQUIRED FIELD ASTERISK ── */
+.req {
+    color: var(--error);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* standalone label above a radio-grid (Step 1 campus row) */
+.field-label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 2px;
+}

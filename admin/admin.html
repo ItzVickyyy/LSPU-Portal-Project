@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LSPU — Admin Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+
+<body>
+  <!-- ── TOPBAR ─────────────────────────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo"><img src="../assets/src/LSPU_Logo.png" alt="LSPU"
+          onerror="this.parentElement.innerHTML='<i class=\'fas fa-university\' style=\'color:var(--blue);font-size:1.1rem\'></i>'" />
+      </div>
+      <div>
+        <div class="brand-text">LSPU Enrollment System</div>
+        <div class="brand-sub">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="top-badge"><i class="fa fa-user-shield"></i> &nbsp;<span id="admin-name-display">Admin</span></span>
+      <button class="logout-btn" onclick="handleLogout()"><i class="fa fa-power-off"></i> Logout</button>
+    </div>
+  </div>
+
+  <!-- ── MAIN LAYOUT ─────────────────────────────────────────────────────── -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-greeting">
+        <img src="../assets/src/Greetings.gif" alt="Greetings" class="sidebar-greeting-img" />
+      </div>
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item active" data-section="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></div>
+
+      <div class="nav-group-label">Admission</div>
+      <div class="nav-item" data-section="applicants"><i class="fas fa-user-clock"></i><span>Applicants</span></div>
+
+      <div class="nav-group-label">Academic</div>
+      <div class="nav-item" data-section="students"><i class="fas fa-user-graduate"></i><span>Students</span></div>
+
+      <div class="nav-group-label">Reference</div>
+      <div class="nav-item" data-section="programs"><i class="fas fa-graduation-cap"></i><span>Programs</span></div>
+      <div class="nav-item" data-section="subjects"><i class="fas fa-book"></i><span>Subjects</span></div>
+      <div class="nav-item" data-section="instructors"><i class="fas fa-chalkboard-teacher"></i><span>Instructors</span>
+      </div>
+      <div class="nav-item" data-section="sections"><i class="fas fa-sitemap"></i><span>Sections</span></div>
+      <div class="nav-item" data-section="colleges"><i class="fas fa-building"></i><span>Colleges</span></div>
+      <div class="nav-item" data-section="campus"><i class="fas fa-map-marker-alt"></i><span>Campus</span></div>
+      <div class="nav-item" data-section="semesters"><i class="fas fa-clock"></i><span>Semesters</span></div>
+
+      <div class="nav-group-label">Admin</div>
+      <div class="nav-item" data-section="admins"><i class="fas fa-user-shield"></i><span>User Management</span></div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <!-- ══ DASHBOARD ══════════════════════════════════════════════ -->
+      <section id="sec-dashboard" class="section active">
+        <div class="page-hdr">
+          <h1>Dashboard</h1>
+          <p>LSPU Enrollment System — Overview</p>
+        </div>
+        <div class="stats-row" id="dash-stats">
+          <div class="loading">Loading…</div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card">
+            <h3>Applicants by Status</h3>
+            <div class="bar-chart" id="dash-bar"></div>
+          </div>
+          <div class="dash-card">
+            <h3>Recent Applicants</h3>
+            <div class="recent-list" id="dash-recent"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ APPLICANTS ════════════════════════════════════════════ -->
+      <section id="sec-applicants" class="section">
+        <div class="page-hdr">
+          <h1>Applicants</h1>
+          <p>View and manage applicants in the admission pipeline. Enrolled applicants are tracked under Students.</p>
+        </div>
+        <!-- Enrolled-count info banner — populated by loadApplicants() -->
+        <div id="appl-enrolled-banner"
+          style="display:none;margin-bottom:12px;padding:10px 16px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.18);border-radius:8px;font-size:.84rem;color:var(--primary,#2563eb);">
+          <i class="fas fa-user-graduate"></i>
+          <span id="appl-enrolled-text"></span>
+          &nbsp;·&nbsp;
+          <a href="#" onclick="showSection('students');return false;" style="font-weight:600;color:inherit;">View in
+            Students →</a>
+        </div>
+        <div class="toolbar">
+          <input id="appl-search" class="search-box" type="text" placeholder="Search by name, middle name, or email…"
+            oninput="debounce(loadApplicants,320)()" />
+          <select id="appl-status" class="filter-sel" onchange="loadApplicants()">
+            <option value="">All Statuses</option>
+            <option>Pending</option>
+            <option>Draft</option>
+            <option>Submitted</option>
+            <option>Rejected</option>
+          </select>
+          <select id="appl-campus" class="filter-sel" onchange="loadApplicants()">
+            <option value="">All Campuses</option>
+          </select>
+          <select id="appl-program" class="filter-sel" onchange="loadApplicants()">
+            <option value="">All Programs</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportApplicantsCSV()" title="Export current filtered view to CSV">
+            <i class="fas fa-file-csv"></i> Export CSV
+          </button>
+          <button class="btn btn-primary" onclick="openAddApplicantModal()"><i class="fas fa-plus"></i> Add
+            Applicant</button>
+        </div>
+        <div class="toolbar-row2">
+          <span class="date-label"><i class="fas fa-calendar-alt"></i> Registered:</span>
+          <input type="date" id="appl-date-from" class="date-filter" title="From date" onchange="loadApplicants()" />
+          <span class="date-label" style="color:var(--muted)">to</span>
+          <input type="date" id="appl-date-to" class="date-filter" title="To date" onchange="loadApplicants()" />
+          <button class="btn btn-outline btn-sm" onclick="clearDateFilters()" title="Clear date filters">
+            <i class="fas fa-times"></i> Clear dates
+          </button>
+        </div>
+        <!-- Bulk action bar (visible when rows checked) -->
+        <div class="bulk-bar" id="appl-bulk-bar">
+          <span class="bulk-count" id="appl-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-success btn-sm" onclick="bulkSetStatus('Enrolled')"><i
+                class="fas fa-check-circle"></i> Mark Enrolled</button>
+            <button class="btn btn-danger btn-sm" onclick="bulkSetStatus('Rejected')"><i
+                class="fas fa-times-circle"></i> Mark Rejected</button>
+            <button class="btn btn-outline btn-sm" onclick="bulkSetStatus('Submitted')"><i
+                class="fas fa-paper-plane"></i> Mark Submitted</button>
+            <button class="btn btn-outline btn-sm" style="border-color:var(--gold);color:#7a5000"
+              onclick="bulkSetStatus('Pending')"><i class="fas fa-clock"></i> Mark Pending</button>
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteApplicants()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+            <button class="btn btn-outline btn-sm" onclick="clearBulkSelection()"><i class="fas fa-deselect"></i>
+              Deselect All</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="appl-check-all" class="row-cb"
+                    title="Select all on this page" onchange="toggleAllCheckboxes(this)" /></th>
+                <th class="sortable" data-col="full_name" onclick="applSort('full_name')">Name</th>
+                <th class="sortable" data-col="Email" onclick="applSort('Email')">Email</th>
+                <th class="sortable" data-col="campus" onclick="applSort('campus')">Campus</th>
+                <th class="sortable" data-col="Program_Code" onclick="applSort('Program_Code')">Program</th>
+                <th class="sortable" data-col="application_status" onclick="applSort('application_status')">Status</th>
+                <th class="sortable" data-col="created_at" onclick="applSort('created_at')">Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="appl-tbody">
+              <tr>
+                <td colspan="8" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="result-count" id="appl-result-count"></div>
+        <div class="pagination-bar" id="appl-pagination" style="display:none">
+          <div class="pagination-info" id="appl-pg-info"></div>
+          <div class="pagination-controls" id="appl-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ STUDENTS ══════════════════════════════════════════════ -->
+      <section id="sec-students" class="section">
+        <div class="page-hdr">
+          <h1>Students</h1>
+          <p>Enrolled student roster</p>
+        </div>
+        <div class="toolbar">
+          <input id="stu-search" class="search-box" type="text" placeholder="Search by name, student number, or email…"
+            oninput="debounce(loadStudents,320)()" />
+          <select id="stu-status" class="filter-sel" onchange="loadStudents()">
+            <option value="">All Statuses</option>
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>LOA</option>
+          </select>
+          <select id="stu-campus" class="filter-sel" onchange="loadStuSections();loadStudents()">
+            <option value="">All Campuses</option>
+          </select>
+          <select id="stu-program" class="filter-sel" onchange="loadStudents()">
+            <option value="">All Programs</option>
+          </select>
+          <select id="stu-section" class="filter-sel" onchange="loadStudents()">
+            <option value="">All Sections</option>
+          </select>
+          <select id="stu-year" class="filter-sel" onchange="loadStudents()">
+            <option value="">All Year Levels</option>
+            <option>1st Year</option>
+            <option>2nd Year</option>
+            <option>3rd Year</option>
+            <option>4th Year</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportStudentsCSV()" title="Export current filtered view to CSV">
+            <i class="fas fa-file-csv"></i> Export CSV
+          </button>
+        </div>
+        <div class="toolbar-row2">
+          <span class="date-label"><i class="fas fa-calendar-alt"></i> Enrolled:</span>
+          <input type="date" id="stu-date-from" class="date-filter" title="From date" onchange="loadStudents()" />
+          <span class="date-label" style="color:var(--muted)">to</span>
+          <input type="date" id="stu-date-to" class="date-filter" title="To date" onchange="loadStudents()" />
+          <button class="btn btn-outline btn-sm" onclick="clearStudentDateFilters()" title="Clear date filters">
+            <i class="fas fa-times"></i> Clear dates
+          </button>
+        </div>
+        <!-- Bulk action bar (visible when rows checked) -->
+        <div class="bulk-bar" id="stu-bulk-bar">
+          <span class="bulk-count" id="stu-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-success btn-sm" onclick="stuBulkSetStatus('Active')"><i
+                class="fas fa-check-circle"></i> Mark Active</button>
+            <button class="btn btn-danger btn-sm" onclick="stuBulkSetStatus('Inactive')"><i
+                class="fas fa-times-circle"></i> Mark Inactive</button>
+            <button class="btn btn-outline btn-sm" style="border-color:var(--gold);color:#7a5000"
+              onclick="stuBulkSetStatus('LOA')"><i class="fas fa-pause-circle"></i> Mark LOA</button>
+            <button class="btn btn-outline btn-sm" onclick="clearStuBulkSelection()"><i class="fas fa-deselect"></i>
+              Deselect All</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="stu-check-all" class="row-cb"
+                    title="Select all on this page" onchange="toggleAllStuCheckboxes(this)" /></th>
+                <th class="sortable" data-col="student_id" onclick="stuSort('student_id')">Student No.</th>
+                <th class="sortable" data-col="full_name" onclick="stuSort('full_name')">Name</th>
+                <th class="sortable" data-col="campus" onclick="stuSort('campus')">Campus</th>
+                <th class="sortable" data-col="Program_Code" onclick="stuSort('Program_Code')">Program</th>
+                <th class="sortable" data-col="section_name" onclick="stuSort('section_name')">Section</th>
+                <th class="sortable" data-col="year_level" onclick="stuSort('year_level')">Year Level</th>
+                <th class="sortable" data-col="Status" onclick="stuSort('Status')">Status</th>
+                <th class="sortable" data-col="Enrollment_Date" onclick="stuSort('Enrollment_Date')">Enrolled</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stu-tbody">
+              <tr>
+                <td colspan="10" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="result-count" id="stu-result-count"></div>
+        <div class="pagination-bar" id="stu-pagination" style="display:none">
+          <div class="pagination-info" id="stu-pg-info"></div>
+          <div class="pagination-controls" id="stu-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ PROGRAMS ══════════════════════════════════════════════ -->
+      <section id="sec-programs" class="section">
+        <div class="page-hdr">
+          <h1>Programs</h1>
+          <p>Academic programs offered by LSPU</p>
+        </div>
+        <!-- Stats row -->
+        <div class="stats-row" id="prog-stats-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Programs</div>
+            <div class="sc-value" id="prog-stat-total">—</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="sc-label">Colleges</div>
+            <div class="sc-value" id="prog-stat-colleges">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="sc-label">With Specializations</div>
+            <div class="sc-value" id="prog-stat-specs">—</div>
+          </div>
+        </div>
+        <!-- Bulk action bar -->
+        <div class="bulk-bar" id="prog-bulk-bar">
+          <span class="bulk-count" id="prog-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-danger btn-sm" onclick="bulkDeletePrograms()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearProgBulk()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div class="toolbar">
+          <input id="prog-search" class="search-box" type="text" placeholder="Search by code or name…"
+            oninput="debounce(loadPrograms,320)()" />
+          <select id="prog-college-filter" class="filter-sel" onchange="loadPrograms()">
+            <option value="">All Colleges</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportProgramsCSV()" title="Export CSV"><i
+              class="fas fa-download"></i> Export</button>
+          <button class="btn btn-primary" onclick="openAddProgramModal()"><i class="fas fa-plus"></i> Add
+            Program</button>
+        </div>
+        <div class="result-count" id="prog-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="prog-check-all" class="row-cb"
+                    onchange="toggleAllProg(this)" /></th>
+                <th class="sortable" data-col="Program_Code" onclick="progSort('Program_Code')">Code</th>
+                <th class="sortable" data-col="Program_Name" onclick="progSort('Program_Name')">Program Name</th>
+                <th class="sortable" data-col="college_name" onclick="progSort('college_name')">College</th>
+                <th>Specializations</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="prog-tbody">
+              <tr>
+                <td colspan="6" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="prog-pagination" style="display:none">
+          <span class="pagination-info" id="prog-pg-info"></span>
+          <div class="pagination-controls" id="prog-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ SUBJECTS ══════════════════════════════════════════════ -->
+      <section id="sec-subjects" class="section">
+        <div class="page-hdr">
+          <h1>Subjects</h1>
+          <p>Course offerings and credit units</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Subjects</div>
+            <div class="sc-value" id="subj-stat-total">—</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="sc-label">Total Units</div>
+            <div class="sc-value" id="subj-stat-units">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="sc-label">Colleges</div>
+            <div class="sc-value" id="subj-stat-colleges">—</div>
+          </div>
+        </div>
+        <div class="bulk-bar" id="subj-bulk-bar">
+          <span class="bulk-count" id="subj-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteSubjects()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearSubjBulk()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div class="toolbar">
+          <input id="subj-search" class="search-box" type="text" placeholder="Search by code or name…"
+            oninput="debounce(loadSubjects,320)()" />
+          <select id="subj-college-filter" class="filter-sel" onchange="loadSubjects()">
+            <option value="">All Colleges</option>
+          </select>
+          <select id="subj-credits-filter" class="filter-sel" onchange="loadSubjects()">
+            <option value="">All Units</option>
+            <option value="1">1 unit</option>
+            <option value="2">2 units</option>
+            <option value="3">3 units</option>
+            <option value="4">4 units</option>
+            <option value="5">5 units</option>
+            <option value="6">6 units</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportSubjectsCSV()" title="Export CSV"><i
+              class="fas fa-download"></i> Export</button>
+          <button class="btn btn-primary" onclick="openAddSubjectModal()"><i class="fas fa-plus"></i> Add
+            Subject</button>
+        </div>
+        <div class="result-count" id="subj-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="subj-check-all" class="row-cb"
+                    onchange="toggleAllSubj(this)" /></th>
+                <th class="sortable" data-col="Subject_Code" onclick="subjSort('Subject_Code')">Code</th>
+                <th class="sortable" data-col="Subject_Name" onclick="subjSort('Subject_Name')">Subject Name</th>
+                <th class="sortable" data-col="Credits" onclick="subjSort('Credits')">Credits</th>
+                <th class="sortable" data-col="college_name" onclick="subjSort('college_name')">College</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="subj-tbody">
+              <tr>
+                <td colspan="7" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="subj-pagination" style="display:none">
+          <span class="pagination-info" id="subj-pg-info"></span>
+          <div class="pagination-controls" id="subj-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ INSTRUCTORS ════════════════════════════════════════════ -->
+      <section id="sec-instructors" class="section">
+        <div class="page-hdr">
+          <h1>Instructors</h1>
+          <p>Faculty and teaching staff</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Instructors</div>
+            <div class="sc-value" id="inst-stat-total">—</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="sc-label">Colleges</div>
+            <div class="sc-value" id="inst-stat-colleges">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="sc-label">Campuses</div>
+            <div class="sc-value" id="inst-stat-campuses">—</div>
+          </div>
+        </div>
+        <div class="bulk-bar" id="inst-bulk-bar">
+          <span class="bulk-count" id="inst-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteInstructors()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearInstBulk()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div class="toolbar">
+          <input id="inst-search" class="search-box" type="text" placeholder="Search by name, degree, or email…"
+            oninput="debounce(loadInstructors,320)()" />
+          <select id="inst-college-filter" class="filter-sel" onchange="loadInstructors()">
+            <option value="">All Colleges</option>
+          </select>
+          <select id="inst-campus-filter" class="filter-sel" onchange="loadInstructors()">
+            <option value="">All Campuses</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportInstructorsCSV()" title="Export CSV"><i
+              class="fas fa-download"></i> Export</button>
+          <button class="btn btn-primary" onclick="openAddInstructorModal()"><i class="fas fa-plus"></i> Add
+            Instructor</button>
+        </div>
+        <div class="result-count" id="inst-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="inst-check-all" class="row-cb"
+                    onchange="toggleAllInst(this)" /></th>
+                <th class="sortable" data-col="Last_Name" onclick="instSort('Last_Name')">Name</th>
+                <th class="sortable" data-col="Degree" onclick="instSort('Degree')">Degree</th>
+                <th>Email</th>
+                <th class="sortable" data-col="Subject_Code" onclick="instSort('Subject_Code')">Primary Subject</th>
+                <th class="sortable" data-col="college_name" onclick="instSort('college_name')">College</th>
+                <th class="sortable" data-col="Campus_Name" onclick="instSort('Campus_Name')">Campus</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inst-tbody">
+              <tr>
+                <td colspan="8" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="inst-pagination" style="display:none">
+          <span class="pagination-info" id="inst-pg-info"></span>
+          <div class="pagination-controls" id="inst-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ COLLEGES ══════════════════════════════════════════════ -->
+      <section id="sec-colleges" class="section">
+        <div class="page-hdr">
+          <h1>Colleges</h1>
+          <p>Academic colleges of LSPU</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Colleges</div>
+            <div class="sc-value" id="coll-stat-total">—</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="sc-label">Total Programs</div>
+            <div class="sc-value" id="coll-stat-programs">—</div>
+          </div>
+        </div>
+        <div class="bulk-bar" id="coll-bulk-bar">
+          <span class="bulk-count" id="coll-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteColleges()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearCollBulk()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div class="toolbar">
+          <input id="coll-search" class="search-box" type="text" placeholder="Search by code or college name…"
+            oninput="debounce(loadColleges,320)()" />
+          <button class="btn btn-outline" onclick="exportCollegesCSV()" title="Export CSV"><i
+              class="fas fa-download"></i> Export</button>
+          <button class="btn btn-primary" onclick="openAddCollegeModal()"><i class="fas fa-plus"></i> Add
+            College</button>
+        </div>
+        <div class="result-count" id="coll-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="coll-check-all" class="row-cb"
+                    onchange="toggleAllColl(this)" /></th>
+                <th class="sortable" data-col="college_code" onclick="collSort('college_code')">Code</th>
+                <th class="sortable" data-col="college_name" onclick="collSort('college_name')">College Name</th>
+                <th>Email</th>
+                <th class="sortable" data-col="program_count" onclick="collSort('program_count')">Programs</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="coll-tbody">
+              <tr>
+                <td colspan="6" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="coll-pagination" style="display:none">
+          <span class="pagination-info" id="coll-pg-info"></span>
+          <div class="pagination-controls" id="coll-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ CAMPUS ════════════════════════════════════════════════ -->
+      <section id="sec-campus" class="section">
+        <div class="page-hdr">
+          <h1>Campus</h1>
+          <p>LSPU campus locations and contact information</p>
+        </div>
+        <!-- Toolbar (view-only: campuses are fixed LSPU locations) -->
+        <div class="result-count" id="camp-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" data-col="Campus_Name" onclick="campSort('Campus_Name')">Campus Name</th>
+                <th class="sortable" data-col="Barangay" onclick="campSort('Barangay')">Barangay</th>
+                <th class="sortable" data-col="Municipality" onclick="campSort('Municipality')">Municipality</th>
+                <th class="sortable" data-col="Province" onclick="campSort('Province')">Province</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="camp-tbody">
+              <tr>
+                <td colspan="6" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="camp-pagination" style="display:none">
+          <span class="pagination-info" id="camp-pg-info"></span>
+          <div class="pagination-controls" id="camp-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ SECTIONS ══════════════════════════════════════════════ -->
+      <section id="sec-sections" class="section">
+        <div class="page-hdr">
+          <h1>Sections</h1>
+          <p>Class sections per program and year level (e.g. IT 2A, CS 1B, IT WMAD 3A)</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Sections</div>
+            <div class="sc-value" id="sect-stat-total">—</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="sc-label">Programs</div>
+            <div class="sc-value" id="sect-stat-programs">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="sc-label">Total Students</div>
+            <div class="sc-value" id="sect-stat-students">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Campuses</div>
+            <div class="sc-value" id="sect-stat-campuses">—</div>
+          </div>
+        </div>
+        <div class="bulk-bar" id="sect-bulk-bar">
+          <span class="bulk-count" id="sect-bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-danger btn-sm" onclick="bulkDeleteSections()"><i class="fas fa-trash"></i> Delete
+              Selected</button>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearSectBulk()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div class="toolbar">
+          <input id="sect-search" class="search-box" type="text" placeholder="Search by section name or program…"
+            oninput="debounce(loadSections,320)()" />
+          <select id="sect-college-filter" class="filter-sel" onchange="loadSections()">
+            <option value="">All Colleges</option>
+          </select>
+          <select id="sect-year" class="filter-sel" onchange="loadSections()">
+            <option value="">All Year Levels</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+          <select id="sect-campus-filter" class="filter-sel" onchange="loadSections()">
+            <option value="">All Campuses</option>
+          </select>
+          <button class="btn btn-outline" onclick="exportSectionsCSV()" title="Export CSV"><i
+              class="fas fa-download"></i> Export</button>
+          <button class="btn btn-primary" onclick="openAddSectionModal()"><i class="fas fa-plus"></i> Add
+            Section</button>
+        </div>
+        <div class="result-count" id="sect-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" id="sect-check-all" class="row-cb"
+                    onchange="toggleAllSect(this)" /></th>
+                <th class="sortable" data-col="section_name" onclick="sectSort('section_name')">Section</th>
+                <th class="sortable" data-col="Program_Name" onclick="sectSort('Program_Name')">Program</th>
+                <th class="sortable" data-col="year_level" onclick="sectSort('year_level')">Year Level</th>
+                <th class="sortable" data-col="Campus_Name" onclick="sectSort('Campus_Name')">Campus</th>
+                <th class="sortable" data-col="student_count" onclick="sectSort('student_count')">Students</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sect-tbody">
+              <tr>
+                <td colspan="7" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="sect-pagination" style="display:none">
+          <span class="pagination-info" id="sect-pg-info"></span>
+          <div class="pagination-controls" id="sect-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ SEMESTERS ═════════════════════════════════════════════ -->
+      <section id="sec-semesters" class="section">
+        <div class="page-hdr">
+          <h1>Semesters</h1>
+          <p>Academic term calendar — 1st Semester, 2nd Semester, and Summer</p>
+        </div>
+        <!-- Toolbar: status filter + Add Semester (only meaningful action) -->
+        <div class="toolbar">
+          <select id="sem-status-filter" class="filter-sel" onchange="renderSemesters()">
+            <option value="">All Statuses</option>
+            <option value="Open">Open</option>
+            <option value="Closed">Closed</option>
+          </select>
+          <button class="btn btn-primary" onclick="openAddSemesterModal()"><i class="fas fa-plus"></i> Add
+            Semester</button>
+        </div>
+        <div class="result-count" id="sem-result-count"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" data-col="semester_name" onclick="semSort('semester_name')">Semester</th>
+                <th class="sortable" data-col="academic_year" onclick="semSort('academic_year')">Academic Year</th>
+                <th class="sortable" data-col="start_date" onclick="semSort('start_date')">Start</th>
+                <th class="sortable" data-col="end_date" onclick="semSort('end_date')">End</th>
+                <th class="sortable" data-col="status" onclick="semSort('status')">Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sem-tbody">
+              <tr>
+                <td colspan="6" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="sem-pagination" style="display:none">
+          <span class="pagination-info" id="sem-pg-info"></span>
+          <div class="pagination-controls" id="sem-pg-controls"></div>
+        </div>
+      </section>
+
+      <!-- ══ REGISTRAR ACCOUNTS ════════════════════════════════════ -->
+      <!-- ── USER MANAGEMENT (Super Admin only) ── -->
+      <section id="sec-admins" class="section">
+        <div class="page-hdr">
+          <h1>User Management</h1>
+          <p>Admin accounts — Super Admin only</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openAdminModal()"><i class="fas fa-plus"></i> Add Staff
+            Account</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admins-tbody">
+              <tr>
+                <td colspan="6" class="loading">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main><!-- /main -->
+  </div><!-- /layout -->
+
+  <!-- ══MODALS═══════════════════════════════ -->
+
+  <!-- Applicant Detail Modal -->
+  <div class="overlay" id="appl-modal">
+    <div class="modal" style="width:min(780px,95vw)">
+      <div class="modal-hdr">
+        <h2 id="appl-modal-title">Applicant Details</h2>
+        <button class="modal-close" onclick="closeModal('appl-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="appl-modal-body">
+        <div class="loading">Loading…</div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('appl-modal')">Close</button>
+        <button class="btn btn-success" id="appl-modal-enroll-btn"
+          onclick="closeModal('appl-modal');enrollSingleApplicant(document.getElementById('appl-modal-id').value)"
+          style="display:none">
+          <i class="fas fa-user-graduate"></i> Enroll
+        </button>
+        <button class="btn btn-gold" id="appl-modal-edit-btn"
+          onclick="closeModal('appl-modal');editApplicant(document.getElementById('appl-modal-id').value)">
+          <i class="fas fa-pen"></i> Edit Applicant
+        </button>
+      </div>
+      <input type="hidden" id="appl-modal-id" />
+    </div>
+  </div>
+
+  <!-- Grade Subject List Modal (per student) -->
+  <div class="overlay" id="grade-list-modal">
+    <div class="modal" style="width:min(800px,95vw)">
+      <div class="modal-hdr">
+        <h2 id="grade-list-title">Grades</h2>
+        <button class="modal-close" onclick="closeModal('grade-list-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="grade-list-body">
+        <div class="loading">Loading…</div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('grade-list-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade Edit Modal (single subject) -->
+  <div class="overlay" id="grade-modal">
+    <div class="modal" style="width:460px">
+      <div class="modal-hdr">
+        <h2 id="grade-modal-subject">Edit Grade</h2>
+        <button class="modal-close" onclick="closeModal('grade-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="g-id" />
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="fg">
+            <label>Class Engagement <small style="font-weight:400;opacity:.7">(Attendance, Behavior, Interaction,
+                Participation, Recitation — 20%)</small></label>
+            <input id="g-class-engagement" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="fg">
+            <label>Learning Outputs <small style="font-weight:400;opacity:.7">(Activities, Exercises, Seatworks,
+                Projects — 20%)</small></label>
+            <input id="g-learning-outputs" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="fg">
+            <label>Quizzes <small style="font-weight:400;opacity:.7">(20%)</small></label>
+            <input id="g-quizzes" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="fg">
+            <label>Midterm Exam <small style="font-weight:400;opacity:.7">(20%)</small></label>
+            <input id="g-midterm" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="fg">
+            <label>Final Exam <small style="font-weight:400;opacity:.7">(20%)</small></label>
+            <input id="g-final" type="number" min="0" max="100" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('grade-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveGrade()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Applicant Modal (full applicant_profile form) -->
+  <div class="overlay" id="add-appl-modal">
+    <div class="modal" style="width:min(820px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-user-plus"></i> Add New Applicant</h2>
+        <button class="modal-close" onclick="closeModal('add-appl-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Step 1 — Campus & Admission -->
+        <div class="section-sep">Step 1 — Campus &amp; Admission</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Campus and Admission Information</h4>
+        <p style="margin:0 0 10px;font-size:.8rem;color:var(--clr-muted,#888)">Please select your preferred campus and
+          admission details.</p>
+        <div class="form-grid">
+          <div class="fg full">
+            <label>Campus <span class="req">*</span></label>
+            <select id="na-campus">
+              <option value="" disabled selected>— Select Campus —</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Student Type <span class="req">*</span></label>
+            <select id="na-student-type">
+              <option value="" disabled selected>Select Student Type</option>
+              <option value="College">College</option>
+              <option value="GSaR">GSaR</option>
+              <option value="Post Graduate">Post Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Year Level <span class="req">*</span></label>
+            <select id="na-year-level">
+              <option value="" disabled selected>Select Year Level</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+              <option value="5th Year">5th Year</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Admission Type <span class="req">*</span></label>
+            <select id="na-admission-type">
+              <option value="" disabled selected>Choose...</option>
+              <optgroup label="New Student">
+                <option value="Senior HS Graduate">Senior HS Graduate</option>
+                <option value="HS Graduate">HS Graduate</option>
+                <option value="Alternative Delivery Mode">Alternative Delivery Mode</option>
+                <option value="ALS Passer">Alternative Learning System (ALS) Passer</option>
+                <option value="Transferee">Transferee</option>
+                <option value="Second Courser">Second Courser</option>
+              </optgroup>
+              <optgroup label="Old Student">
+                <option value="Shifter">Shifter</option>
+                <option value="Returnee">Returnee</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 2 — Personal Information -->
+        <div class="section-sep" style="margin-top:18px">Step 2 — Personal Information</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Your Identity</h4>
+        <div class="form-grid">
+          <div class="fg"><label>First Name <span class="req">*</span></label><input id="na-first" type="text"
+              placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="na-middle" type="text" placeholder="Middle Name" /></div>
+          <div class="fg"><label>Last Name <span class="req">*</span></label><input id="na-last" type="text"
+              placeholder="Last Name" /></div>
+          <div class="fg"><label>Suffix</label><input id="na-suffix" type="text" placeholder="Jr., Sr., III…" /></div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Birthdate &amp; Contact Info</h4>
+        <div class="form-grid">
+          <div class="fg"><label>Birthdate</label><input id="na-birthday" type="date" /></div>
+          <div class="fg"><label>Citizenship</label><input id="na-citizenship" type="text" placeholder="Citizenship" />
+          </div>
+          <div class="fg"><label>Place of Birth</label><input id="na-birthplace" type="text"
+              placeholder="Birth Place" /></div>
+          <div class="fg"><label>Mobile Number</label><input id="na-contact" type="tel" maxlength="11"
+              placeholder="09XXXXXXXXX" /></div>
+          <div class="fg"><label>Landline No.</label><input id="na-landline" type="text"
+              placeholder="Landline Number" /></div>
+          <div class="fg"><label>E-Mail Address <span class="req">*</span></label><input id="na-email" type="email"
+              placeholder="example@email.com" /></div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Your Address Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>House Number</label><input id="na-house" type="text" placeholder="e.g. 123" /></div>
+          <div class="fg"><label>Street</label><input id="na-street" type="text" placeholder="Street name" /></div>
+          <div class="fg"><label>Barangay</label><input id="na-barangay" type="text" placeholder="Barangay" /></div>
+          <div class="fg"><label>Municipality / City</label><input id="na-municipality" type="text"
+              placeholder="City or Municipality" /></div>
+          <div class="fg"><label>Province</label><input id="na-province" type="text" placeholder="Province" /></div>
+          <div class="fg"><label>Zip / Postal Code</label><input id="na-zip" type="text" maxlength="4"
+              placeholder="e.g. 4000" /></div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Other Information</h4>
+        <div class="form-grid">
+          <div class="fg">
+            <label>Sex <span class="req">*</span></label>
+            <div class="radio-pill-group">
+              <label class="radio-pill"><input type="radio" name="na-sex-radio" value="Male"><span>Male</span></label>
+              <label class="radio-pill"><input type="radio" name="na-sex-radio"
+                  value="Female"><span>Female</span></label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Civil Status <span class="req">*</span></label>
+            <select id="na-civil">
+              <option value="" disabled selected>Choose...</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Widowed">Widowed</option>
+            </select>
+          </div>
+          <div class="fg"><label>Religion</label><input id="na-religion" type="text" placeholder="Religion" /></div>
+          <div class="fg"><label>Disability</label><input id="na-disability" type="text" placeholder="If applicable" />
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="fg full">
+            <label>Are you a first-generation incoming college student?</label>
+            <div class="radio-pill-group">
+              <label class="radio-pill"><input type="radio" name="na-firstgen-radio"
+                  value="Yes"><span>Yes</span></label>
+              <label class="radio-pill"><input type="radio" name="na-firstgen-radio" value="No"><span>No</span></label>
+            </div>
+            <span style="font-size:.75rem;color:var(--clr-muted,#888);display:block;margin-top:6px">Being a
+              first-generation student means that your parent(s) did not complete a college degree.</span>
+          </div>
+        </div>
+
+        <!-- Step 3 — Guardian / Parents -->
+        <div class="section-sep" style="margin-top:18px">Step 3 — Guardian / Parents</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Guardian Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>Guardian First Name</label><input id="na-gfirst" type="text"
+              placeholder="First Name" /></div>
+          <div class="fg"><label>Guardian Last Name</label><input id="na-glast" type="text" placeholder="Last Name" />
+          </div>
+          <div class="fg"><label>Guardian Mobile Number</label><input id="na-gcontact" type="tel" maxlength="11"
+              placeholder="09XXXXXXXXX" /></div>
+          <div class="fg"><label>Guardian E-Mail</label><input id="na-gemail" type="email"
+              placeholder="example@email.com" /></div>
+          <div class="fg">
+            <label>Relation with Guardian</label>
+            <select id="na-grel">
+              <option value="" disabled selected>Select Relationship</option>
+              <option value="Guardian">Guardian</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+            </select>
+          </div>
+          <div class="fg"><label>Guardian Barangay</label><input id="na-gbarangay" type="text" placeholder="Barangay" />
+          </div>
+          <div class="fg"><label>Guardian Municipality</label><input id="na-gmunicipality" type="text"
+              placeholder="City or Municipality" /></div>
+          <div class="fg"><label>Guardian Province</label><input id="na-gprovince" type="text" placeholder="Province" />
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Father's Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>First Name</label><input id="na-fffirst" type="text" placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="na-ffmiddle" type="text" placeholder="Middle Name" />
+          </div>
+          <div class="fg"><label>Last Name</label><input id="na-fflast" type="text" placeholder="Last Name" /></div>
+          <div class="fg"><label>Age</label><input id="na-ffage" type="number" min="1" max="120" placeholder="Age" />
+          </div>
+          <div class="fg"><label>Citizenship</label><input id="na-ffcitizenship" type="text"
+              placeholder="Citizenship" /></div>
+          <div class="fg">
+            <label>Educational Attainment</label>
+            <select id="na-ffedu">
+              <option value="" disabled selected>Select Educational Attainment</option>
+              <option value="No formal education">No formal education</option>
+              <option value="Elementary Level">Elementary Level</option>
+              <option value="Elementary Graduate">Elementary Graduate</option>
+              <option value="High School Level">High School Level</option>
+              <option value="High School Graduate">High School Graduate</option>
+              <option value="College Level">College Level</option>
+              <option value="College Graduate">College Graduate</option>
+              <option value="Masters Level">Master's Level</option>
+              <option value="Masters Graduate">Master's Graduate</option>
+              <option value="Doctorates Level">Doctorate's Level</option>
+              <option value="Doctorates Graduate">Doctorate's Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Employment Status</label>
+            <select id="na-ffemp">
+              <option value="" disabled selected>Select Employment Status</option>
+              <option value="Unemployed (not seeking for employment)">Unemployed (not seeking for employment)</option>
+              <option value="Unemployed (actively seeking for employment)">Unemployed (actively seeking for employment)
+              </option>
+              <optgroup label="Employed">
+                <option value="Government">Government</option>
+                <option value="Private">Private</option>
+              </optgroup>
+              <option value="Self-Employed">Self-Employed</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Occupation</label>
+            <select id="na-ffocc">
+              <option value="" disabled selected>Select Occupation</option>
+              <option value="Armed Forces Occupations">Armed Forces Occupations</option>
+              <optgroup label="Professionals">
+                <option value="Science and Engineering Professionals">Science and Engineering Professionals</option>
+                <option value="Health Professionals">Health Professionals</option>
+                <option value="Teaching Professionals">Teaching Professionals</option>
+                <option value="Business Administration Professionals">Business Administration Professionals</option>
+                <option value="ICT Professionals">ICT Professionals</option>
+                <option value="Legal, Social, and Cultural Professionals">Legal, Social, and Cultural Professionals
+                </option>
+              </optgroup>
+              <option value="Managers">Managers</option>
+              <option value="Technicians and Associate Professionals">Technicians and Associate Professionals</option>
+              <option value="Clerical Support Workers">Clerical Support Workers</option>
+              <option value="Service and Sales Workers">Service and Sales Workers</option>
+              <option value="Skilled Agricultural, Forestry, and Fishery Workers">Skilled Agricultural, Forestry, and
+                Fishery Workers</option>
+              <option value="Craft and Related Trades Workers">Craft and Related Trades Workers</option>
+              <option value="Plant and Machine Operators, and Assemblers">Plant and Machine Operators, and Assemblers
+              </option>
+              <option value="Elementary Occupations">Elementary Occupations</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Mother's Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>First Name</label><input id="na-mfirst" type="text" placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="na-mmiddle" type="text" placeholder="Middle Name" />
+          </div>
+          <div class="fg"><label>Last Name</label><input id="na-mlast" type="text" placeholder="Last Name" /></div>
+          <div class="fg"><label>Age</label><input id="na-mage" type="number" min="1" max="120" placeholder="Age" />
+          </div>
+          <div class="fg"><label>Citizenship</label><input id="na-mcitizenship" type="text" placeholder="Citizenship" />
+          </div>
+          <div class="fg">
+            <label>Educational Attainment</label>
+            <select id="na-medu">
+              <option value="" disabled selected>Select Educational Attainment</option>
+              <option value="No formal education">No formal education</option>
+              <option value="Elementary Level">Elementary Level</option>
+              <option value="Elementary Graduate">Elementary Graduate</option>
+              <option value="High School Level">High School Level</option>
+              <option value="High School Graduate">High School Graduate</option>
+              <option value="College Level">College Level</option>
+              <option value="College Graduate">College Graduate</option>
+              <option value="Masters Level">Master's Level</option>
+              <option value="Masters Graduate">Master's Graduate</option>
+              <option value="Doctorates Level">Doctorate's Level</option>
+              <option value="Doctorates Graduate">Doctorate's Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Employment Status</label>
+            <select id="na-memp">
+              <option value="" disabled selected>Select Employment Status</option>
+              <option value="Unemployed (not seeking for employment)">Unemployed (not seeking for employment)</option>
+              <option value="Unemployed (actively seeking for employment)">Unemployed (actively seeking for employment)
+              </option>
+              <optgroup label="Employed">
+                <option value="Government">Government</option>
+                <option value="Private">Private</option>
+              </optgroup>
+              <option value="Self-Employed">Self-Employed</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Occupation</label>
+            <select id="na-mocc">
+              <option value="" disabled selected>Select Occupation</option>
+              <option value="Armed Forces Occupations">Armed Forces Occupations</option>
+              <optgroup label="Professionals">
+                <option value="Science and Engineering Professionals">Science and Engineering Professionals</option>
+                <option value="Health Professionals">Health Professionals</option>
+                <option value="Teaching Professionals">Teaching Professionals</option>
+                <option value="Business Administration Professionals">Business Administration Professionals</option>
+                <option value="ICT Professionals">ICT Professionals</option>
+                <option value="Legal, Social, and Cultural Professionals">Legal, Social, and Cultural Professionals
+                </option>
+              </optgroup>
+              <option value="Managers">Managers</option>
+              <option value="Technicians and Associate Professionals">Technicians and Associate Professionals</option>
+              <option value="Clerical Support Workers">Clerical Support Workers</option>
+              <option value="Service and Sales Workers">Service and Sales Workers</option>
+              <option value="Skilled Agricultural, Forestry, and Fishery Workers">Skilled Agricultural, Forestry, and
+                Fishery Workers</option>
+              <option value="Craft and Related Trades Workers">Craft and Related Trades Workers</option>
+              <option value="Plant and Machine Operators, and Assemblers">Plant and Machine Operators, and Assemblers
+              </option>
+              <option value="Elementary Occupations">Elementary Occupations</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 4 — Educational Background -->
+        <div class="section-sep" style="margin-top:18px">Step 4 — Educational Background</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Elementary Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="na-elem" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="na-elem-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="na-elem-type">
+              <option value="" disabled selected>Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="na-elem-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="na-elem-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">High School Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="na-hs" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="na-hs-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="na-hs-type">
+              <option value="" disabled selected>Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="na-hs-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="na-hs-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Senior High School Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="na-shs" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="na-shs-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="na-shs-type">
+              <option value="" disabled selected>Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="na-shs-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="na-shs-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+          <div class="fg">
+            <label>Track or Strand</label>
+            <select id="na-track">
+              <option value="" disabled selected>Select Track</option>
+              <optgroup label="Academic Track">
+                <option value="STEM">STEM</option>
+                <option value="ABM">ABM</option>
+                <option value="HUMSS">HUMSS</option>
+                <option value="GAS">GAS</option>
+              </optgroup>
+              <optgroup label="Technical-Vocational-Livelihood (TVL) Track">
+                <option value="Home Economics">Home Economics</option>
+                <option value="ICT">ICT</option>
+                <option value="Agri-fishery Arts">Agri-fishery Arts</option>
+                <option value="Industrial Arts">Industrial Arts</option>
+              </optgroup>
+              <optgroup label="Other Tracks">
+                <option value="Arts and Design Track">Arts and Design Track</option>
+                <option value="Sports Track">Sports Track</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 5 — Intended Course -->
+        <div class="section-sep" style="margin-top:18px">Step 5 — Intended Course</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Intended Course Selection</h4>
+        <div class="form-grid">
+          <div class="fg">
+            <label>First Choice <span class="req">*</span></label>
+            <select id="na-program">
+              <option value="" disabled selected>Select Course</option>
+              <optgroup label="College of Arts and Science">
+                <option value="BSP">BS Psychology</option>
+              </optgroup>
+              <optgroup label="College of Business Administration and Accountancy">
+                <option value="BSA">BS Accountancy</option>
+                <option value="BSBA">BS Business Administration</option>
+              </optgroup>
+              <optgroup label="College of Computer Studies">
+                <option value="BSIT">BS Information Technology</option>
+                <option value="BSCS">BS Computer Science</option>
+              </optgroup>
+              <optgroup label="College of Criminal Justice Education">
+                <option value="BSC">BS Criminology</option>
+              </optgroup>
+              <optgroup label="College of Fisheries">
+                <option value="BSF">BS Fisheries</option>
+                <option value="BSAFBM">BS Agri-Fisheries Business Management</option>
+                <option value="BSFE">BS Fishery Education</option>
+              </optgroup>
+              <optgroup label="College of Food Nutrition and Dietetics">
+                <option value="BSFT">BS Food Technology</option>
+                <option value="BSND">BS Nutrition and Dietetics</option>
+              </optgroup>
+              <optgroup label="College of International Hospitality and Tourism Management">
+                <option value="BSHRM">BS Hotel and Restaurant Management</option>
+                <option value="BST">BS Tourism</option>
+              </optgroup>
+              <optgroup label="College of Teacher Education">
+                <option value="BSED">Bachelor of Secondary Education</option>
+                <option value="BEED">Bachelor of Elementary Education</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Specialization / Major</label>
+            <select id="na-spec">
+              <option value="">— None / N/A —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-appl-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewApplicant()"><i class="fas fa-user-plus"></i> Create
+          Applicant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Applicant Modal -->
+  <div class="overlay" id="edit-appl-modal">
+    <div class="modal" style="width:min(820px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen"></i> Edit Applicant</h2>
+        <button class="modal-close" onclick="closeModal('edit-appl-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ea-student-id" />
+
+        <!-- Step 1 — Campus & Admission -->
+        <div class="section-sep">Step 1 — Campus &amp; Admission</div>
+        <div class="form-grid">
+          <div class="fg full">
+            <label>Campus <span class="req">*</span></label>
+            <select id="ea-campus">
+              <option value="" disabled selected>— Select Campus —</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Student Type</label>
+            <select id="ea-student-type">
+              <option value="">Select Student Type</option>
+              <option value="College">College</option>
+              <option value="GSaR">GSaR</option>
+              <option value="Post Graduate">Post Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Year Level</label>
+            <select id="ea-year-level">
+              <option value="">Select Year Level</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+              <option value="5th Year">5th Year</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Admission Type</label>
+            <select id="ea-admission-type">
+              <option value="">Choose...</option>
+              <optgroup label="New Student">
+                <option value="Senior HS Graduate">Senior HS Graduate</option>
+                <option value="HS Graduate">HS Graduate</option>
+                <option value="Alternative Delivery Mode">Alternative Delivery Mode</option>
+                <option value="ALS Passer">ALS Passer</option>
+                <option value="Transferee">Transferee</option>
+                <option value="Second Courser">Second Courser</option>
+              </optgroup>
+              <optgroup label="Old Student">
+                <option value="Shifter">Shifter</option>
+                <option value="Returnee">Returnee</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 2 — Personal Information -->
+        <div class="section-sep" style="margin-top:18px">Step 2 — Personal Information</div>
+        <div class="form-grid">
+          <div class="fg"><label>First Name <span class="req">*</span></label><input id="ea-first" type="text"
+              placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="ea-middle" type="text" placeholder="Middle Name" /></div>
+          <div class="fg"><label>Last Name <span class="req">*</span></label><input id="ea-last" type="text"
+              placeholder="Last Name" /></div>
+          <div class="fg"><label>Suffix</label><input id="ea-suffix" type="text" placeholder="Jr., Sr., III…" /></div>
+          <div class="fg"><label>Birthdate</label><input id="ea-birthday" type="date" /></div>
+          <div class="fg"><label>Citizenship</label><input id="ea-citizenship" type="text" placeholder="Citizenship" />
+          </div>
+          <div class="fg"><label>Place of Birth</label><input id="ea-birthplace" type="text"
+              placeholder="Birth Place" /></div>
+          <div class="fg"><label>Mobile Number</label><input id="ea-contact" type="tel" maxlength="11"
+              placeholder="09XXXXXXXXX" /></div>
+          <div class="fg"><label>Landline No.</label><input id="ea-landline" type="text"
+              placeholder="Landline Number" /></div>
+          <div class="fg"><label>E-Mail Address <span class="req">*</span></label><input id="ea-email" type="email"
+              placeholder="example@email.com" /></div>
+          <div class="fg">
+            <label>Sex <span class="req">*</span></label>
+            <div class="radio-pill-group">
+              <label class="radio-pill"><input type="radio" name="ea-sex-radio" value="Male"><span>Male</span></label>
+              <label class="radio-pill"><input type="radio" name="ea-sex-radio"
+                  value="Female"><span>Female</span></label>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Civil Status</label>
+            <select id="ea-civil">
+              <option value="">Choose...</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Widowed">Widowed</option>
+            </select>
+          </div>
+          <div class="fg"><label>Religion</label><input id="ea-religion" type="text" placeholder="Religion" /></div>
+          <div class="fg"><label>Disability</label><input id="ea-disability" type="text" placeholder="If applicable" />
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Address</h4>
+        <div class="form-grid">
+          <div class="fg"><label>House Number</label><input id="ea-house" type="text" placeholder="e.g. 123" /></div>
+          <div class="fg"><label>Street</label><input id="ea-street" type="text" placeholder="Street name" /></div>
+          <div class="fg"><label>Barangay</label><input id="ea-barangay" type="text" placeholder="Barangay" /></div>
+          <div class="fg"><label>Municipality / City</label><input id="ea-municipality" type="text"
+              placeholder="City or Municipality" /></div>
+          <div class="fg"><label>Province</label><input id="ea-province" type="text" placeholder="Province" /></div>
+          <div class="fg"><label>Zip / Postal Code</label><input id="ea-zip" type="text" maxlength="4"
+              placeholder="e.g. 4000" /></div>
+        </div>
+        <div class="form-grid" style="margin-top:10px">
+          <div class="fg full">
+            <label>First-generation college student?</label>
+            <div class="radio-pill-group">
+              <label class="radio-pill"><input type="radio" name="ea-firstgen-radio"
+                  value="Yes"><span>Yes</span></label>
+              <label class="radio-pill"><input type="radio" name="ea-firstgen-radio" value="No"><span>No</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 — Guardian / Parents -->
+        <div class="section-sep" style="margin-top:18px">Step 3 — Guardian / Parents</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Guardian Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>Guardian First Name</label><input id="ea-gfirst" type="text"
+              placeholder="First Name" /></div>
+          <div class="fg"><label>Guardian Last Name</label><input id="ea-glast" type="text" placeholder="Last Name" />
+          </div>
+          <div class="fg"><label>Guardian Mobile</label><input id="ea-gcontact" type="tel" maxlength="11"
+              placeholder="09XXXXXXXXX" /></div>
+          <div class="fg"><label>Guardian E-Mail</label><input id="ea-gemail" type="email"
+              placeholder="example@email.com" /></div>
+          <div class="fg">
+            <label>Relation with Guardian</label>
+            <select id="ea-grel">
+              <option value="">Select Relationship</option>
+              <option value="Guardian">Guardian</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+            </select>
+          </div>
+          <div class="fg"><label>Guardian Barangay</label><input id="ea-gbarangay" type="text" placeholder="Barangay" />
+          </div>
+          <div class="fg"><label>Guardian Municipality</label><input id="ea-gmunicipality" type="text"
+              placeholder="City or Municipality" /></div>
+          <div class="fg"><label>Guardian Province</label><input id="ea-gprovince" type="text" placeholder="Province" />
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Father's Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>First Name</label><input id="ea-fffirst" type="text" placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="ea-ffmiddle" type="text" placeholder="Middle Name" />
+          </div>
+          <div class="fg"><label>Last Name</label><input id="ea-fflast" type="text" placeholder="Last Name" /></div>
+          <div class="fg"><label>Age</label><input id="ea-ffage" type="number" min="1" max="120" placeholder="Age" />
+          </div>
+          <div class="fg"><label>Citizenship</label><input id="ea-ffcitizenship" type="text"
+              placeholder="Citizenship" /></div>
+          <div class="fg">
+            <label>Educational Attainment</label>
+            <select id="ea-ffedu">
+              <option value="">Select Educational Attainment</option>
+              <option value="No formal education">No formal education</option>
+              <option value="Elementary Level">Elementary Level</option>
+              <option value="Elementary Graduate">Elementary Graduate</option>
+              <option value="High School Level">High School Level</option>
+              <option value="High School Graduate">High School Graduate</option>
+              <option value="College Level">College Level</option>
+              <option value="College Graduate">College Graduate</option>
+              <option value="Masters Level">Master's Level</option>
+              <option value="Masters Graduate">Master's Graduate</option>
+              <option value="Doctorates Level">Doctorate's Level</option>
+              <option value="Doctorates Graduate">Doctorate's Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Employment Status</label>
+            <select id="ea-ffemp">
+              <option value="">Select Employment Status</option>
+              <option value="Unemployed (not seeking for employment)">Unemployed (not seeking)</option>
+              <option value="Unemployed (actively seeking for employment)">Unemployed (actively seeking)</option>
+              <optgroup label="Employed">
+                <option value="Government">Government</option>
+                <option value="Private">Private</option>
+              </optgroup>
+              <option value="Self-Employed">Self-Employed</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Occupation</label>
+            <select id="ea-ffocc">
+              <option value="">Select Occupation</option>
+              <option value="Armed Forces Occupations">Armed Forces Occupations</option>
+              <option value="Managers">Managers</option>
+              <option value="Technicians and Associate Professionals">Technicians and Associate Professionals</option>
+              <option value="Clerical Support Workers">Clerical Support Workers</option>
+              <option value="Service and Sales Workers">Service and Sales Workers</option>
+              <option value="Skilled Agricultural, Forestry, and Fishery Workers">Skilled Agricultural, Forestry, and
+                Fishery Workers</option>
+              <option value="Craft and Related Trades Workers">Craft and Related Trades Workers</option>
+              <option value="Plant and Machine Operators, and Assemblers">Plant and Machine Operators, and Assemblers
+              </option>
+              <option value="Elementary Occupations">Elementary Occupations</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Mother's Information</h4>
+        <div class="form-grid">
+          <div class="fg"><label>First Name</label><input id="ea-mfirst" type="text" placeholder="First Name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="ea-mmiddle" type="text" placeholder="Middle Name" />
+          </div>
+          <div class="fg"><label>Last Name</label><input id="ea-mlast" type="text" placeholder="Last Name" /></div>
+          <div class="fg"><label>Age</label><input id="ea-mage" type="number" min="1" max="120" placeholder="Age" />
+          </div>
+          <div class="fg"><label>Citizenship</label><input id="ea-mcitizenship" type="text" placeholder="Citizenship" />
+          </div>
+          <div class="fg">
+            <label>Educational Attainment</label>
+            <select id="ea-medu">
+              <option value="">Select Educational Attainment</option>
+              <option value="No formal education">No formal education</option>
+              <option value="Elementary Level">Elementary Level</option>
+              <option value="Elementary Graduate">Elementary Graduate</option>
+              <option value="High School Level">High School Level</option>
+              <option value="High School Graduate">High School Graduate</option>
+              <option value="College Level">College Level</option>
+              <option value="College Graduate">College Graduate</option>
+              <option value="Masters Level">Master's Level</option>
+              <option value="Masters Graduate">Master's Graduate</option>
+              <option value="Doctorates Level">Doctorate's Level</option>
+              <option value="Doctorates Graduate">Doctorate's Graduate</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Employment Status</label>
+            <select id="ea-memp">
+              <option value="">Select Employment Status</option>
+              <option value="Unemployed (not seeking for employment)">Unemployed (not seeking)</option>
+              <option value="Unemployed (actively seeking for employment)">Unemployed (actively seeking)</option>
+              <optgroup label="Employed">
+                <option value="Government">Government</option>
+                <option value="Private">Private</option>
+              </optgroup>
+              <option value="Self-Employed">Self-Employed</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Occupation</label>
+            <select id="ea-mocc">
+              <option value="">Select Occupation</option>
+              <option value="Armed Forces Occupations">Armed Forces Occupations</option>
+              <option value="Managers">Managers</option>
+              <option value="Technicians and Associate Professionals">Technicians and Associate Professionals</option>
+              <option value="Clerical Support Workers">Clerical Support Workers</option>
+              <option value="Service and Sales Workers">Service and Sales Workers</option>
+              <option value="Skilled Agricultural, Forestry, and Fishery Workers">Skilled Agricultural, Forestry, and
+                Fishery Workers</option>
+              <option value="Craft and Related Trades Workers">Craft and Related Trades Workers</option>
+              <option value="Plant and Machine Operators, and Assemblers">Plant and Machine Operators, and Assemblers
+              </option>
+              <option value="Elementary Occupations">Elementary Occupations</option>
+              <option value="Unemployed">Unemployed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 4 — Educational Background -->
+        <div class="section-sep" style="margin-top:18px">Step 4 — Educational Background</div>
+        <h4 style="margin:10px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Elementary Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="ea-elem" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="ea-elem-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="ea-elem-type">
+              <option value="">Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="ea-elem-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="ea-elem-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">High School Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="ea-hs" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="ea-hs-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="ea-hs-type">
+              <option value="">Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="ea-hs-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="ea-hs-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+        </div>
+        <h4 style="margin:14px 0 6px;font-size:.85rem;color:var(--clr-muted,#666)">Senior High School Level</h4>
+        <div class="form-grid">
+          <div class="fg"><label>School Name</label><input id="ea-shs" type="text" placeholder="School Name" /></div>
+          <div class="fg"><label>School Address</label><input id="ea-shs-addr" type="text"
+              placeholder="School Address" /></div>
+          <div class="fg">
+            <label>School Type</label>
+            <select id="ea-shs-type">
+              <option value="">Select Type</option>
+              <option value="Private">Private</option>
+              <option value="Public">Public</option>
+            </select>
+          </div>
+          <div class="fg year-range-group">
+            <label>Year Attended</label>
+            <div class="year-range-inputs">
+              <input id="ea-shs-from" type="number" min="1900" max="2099" placeholder="From" />
+              <span class="year-range-sep">&#8212;</span>
+              <input id="ea-shs-to" type="number" min="1900" max="2099" placeholder="To" />
+            </div>
+          </div>
+          <div class="fg">
+            <label>Track or Strand</label>
+            <select id="ea-track">
+              <option value="">Select Track</option>
+              <optgroup label="Academic Track">
+                <option value="STEM">STEM</option>
+                <option value="ABM">ABM</option>
+                <option value="HUMSS">HUMSS</option>
+                <option value="GAS">GAS</option>
+              </optgroup>
+              <optgroup label="Technical-Vocational-Livelihood (TVL) Track">
+                <option value="Home Economics">Home Economics</option>
+                <option value="ICT">ICT</option>
+                <option value="Agri-fishery Arts">Agri-fishery Arts</option>
+                <option value="Industrial Arts">Industrial Arts</option>
+              </optgroup>
+              <optgroup label="Other Tracks">
+                <option value="Arts and Design Track">Arts and Design Track</option>
+                <option value="Sports Track">Sports Track</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 5 — Intended Course -->
+        <div class="section-sep" style="margin-top:18px">Step 5 — Intended Course</div>
+        <div class="form-grid">
+          <div class="fg">
+            <label>First Choice</label>
+            <select id="ea-program">
+              <option value="">Select Course</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Specialization / Major</label>
+            <select id="ea-spec">
+              <option value="">— None / N/A —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-appl-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditApplicant()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="overlay" id="delete-modal">
+    <div class="modal" style="width:420px">
+      <div class="modal-hdr" style="border-bottom-color:#fdecea">
+        <h2 style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i> Confirm Deletion</h2>
+        <button class="modal-close" onclick="closeModal('delete-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-msg" style="font-size:.95rem;line-height:1.6;color:var(--dark)"></p>
+        <p style="font-size:.8rem;color:var(--red);margin-top:12px"><i class="fas fa-circle-exclamation"></i> This
+          action is permanent and cannot be undone.</p>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('delete-modal')">Cancel</button>
+        <button class="btn btn-danger" id="delete-confirm-btn"><i class="fas fa-trash"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Specializations Modal -->
+  <div class="overlay" id="spec-modal">
+    <div class="modal" style="width:500px">
+      <div class="modal-hdr">
+        <h2 id="spec-modal-title">Specializations</h2>
+        <button class="modal-close" onclick="closeModal('spec-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="spec-modal-body">
+        <div class="loading">Loading…</div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('spec-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Program Modal -->
+  <div class="overlay" id="add-prog-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2>Add Program</h2>
+        <button class="modal-close" onclick="closeModal('add-prog-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="fg"><label>Program Code *</label><input id="prog-code" type="text" placeholder="e.g. BSIT" />
+          </div>
+          <div class="fg"><label>Program Name *</label><input id="prog-name" type="text"
+              placeholder="e.g. BS Information Technology" /></div>
+          <div class="fg full"><label>College</label>
+            <select id="prog-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+          <div class="fg full">
+            <label>Specializations <small style="font-weight:400;color:var(--muted)">(comma-separated,
+                optional)</small></label>
+            <input id="prog-specs" type="text" placeholder="e.g. Web Dev, Network, WMAD" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-prog-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewProgram()"><i class="fas fa-save"></i> Save Program</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Program Modal -->
+  <div class="overlay" id="edit-prog-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen" style="font-size:.9rem;margin-right:6px"></i> Edit Program</h2>
+        <button class="modal-close" onclick="closeModal('edit-prog-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ep-orig-code" />
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="fg"><label>Program Code *</label><input id="ep-code" type="text" /></div>
+          <div class="fg"><label>Program Name *</label><input id="ep-name" type="text" /></div>
+          <div class="fg full"><label>College</label>
+            <select id="ep-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-prog-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditProgram()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Subject Modal -->
+  <div class="overlay" id="add-subj-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2>Add Subject</h2>
+        <button class="modal-close" onclick="closeModal('add-subj-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg"><label>Subject Code *</label><input id="subj-code" type="text" placeholder="e.g. IT101" />
+          </div>
+          <div class="fg"><label>Subject Name *</label><input id="subj-name" type="text"
+              placeholder="e.g. Introduction to Computing" /></div>
+          <div class="fg"><label>Credits / Units *</label><input id="subj-credits" type="number" min="1" max="6"
+              placeholder="3" /></div>
+          <div class="fg"><label>College</label>
+            <select id="subj-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Description</label><textarea id="subj-desc" rows="2"
+              style="resize:vertical"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-subj-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewSubject()"><i class="fas fa-save"></i> Save Subject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Subject Modal -->
+  <div class="overlay" id="edit-subj-modal">
+    <div class="modal" style="width:min(560px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen" style="font-size:.9rem;margin-right:6px"></i> Edit Subject</h2>
+        <button class="modal-close" onclick="closeModal('edit-subj-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="es-orig-code" />
+        <div class="form-grid">
+          <div class="fg"><label>Subject Code <span class="req">*</span></label><input id="es-code" type="text" placeholder="e.g. CS101" /></div>
+          <div class="fg"><label>Subject Name <span class="req">*</span></label><input id="es-name" type="text" placeholder="Full subject title" /></div>
+          <div class="fg"><label>Credits / Units <span class="req">*</span></label><input id="es-credits" type="number" min="1" max="6" placeholder="3" /></div>
+          <div class="fg"><label>College</label>
+            <select id="es-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Description</label><textarea id="es-desc" rows="3" style="resize:vertical" placeholder="Brief description of the subject…"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-subj-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditSubject()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Instructor Modal -->
+  <div class="overlay" id="add-inst-modal">
+    <div class="modal" style="width:560px">
+      <div class="modal-hdr">
+        <h2>Add Instructor</h2>
+        <button class="modal-close" onclick="closeModal('add-inst-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg"><label>First Name *</label><input id="inst-first" type="text" /></div>
+          <div class="fg"><label>Middle Name</label><input id="inst-middle" type="text" /></div>
+          <div class="fg"><label>Last Name *</label><input id="inst-last" type="text" /></div>
+          <div class="fg"><label>Suffix / Title</label><input id="inst-suffix" type="text"
+              placeholder="e.g. PhD, MIT" /></div>
+          <div class="fg"><label>Degree</label><input id="inst-degree" type="text" placeholder="e.g. MSCS" /></div>
+          <div class="fg"><label>Email</label><input id="inst-email" type="email" /></div>
+          <div class="fg"><label>Primary Subject</label>
+            <select id="inst-subject">
+              <option value="">— Select Subject —</option>
+            </select>
+          </div>
+          <div class="fg"><label>College</label>
+            <select id="inst-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Campus</label>
+            <select id="inst-campus">
+              <option value="">— Select Campus —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-inst-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewInstructor()"><i class="fas fa-save"></i> Save
+          Instructor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Instructor Modal -->
+  <div class="overlay" id="edit-inst-modal">
+    <div class="modal" style="width:min(560px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen" style="font-size:.9rem;margin-right:6px"></i> Edit Instructor</h2>
+        <button class="modal-close" onclick="closeModal('edit-inst-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ei-id" />
+        <div class="form-grid">
+          <div class="fg"><label>First Name <span class="req">*</span></label><input id="ei-first" type="text" placeholder="First name" /></div>
+          <div class="fg"><label>Middle Name</label><input id="ei-middle" type="text" placeholder="Middle name" /></div>
+          <div class="fg"><label>Last Name <span class="req">*</span></label><input id="ei-last" type="text" placeholder="Last name" /></div>
+          <div class="fg"><label>Suffix / Title</label><input id="ei-suffix" type="text" placeholder="e.g. PhD, MIT" /></div>
+          <div class="fg"><label>Degree</label><input id="ei-degree" type="text" placeholder="e.g. MSCS" /></div>
+          <div class="fg"><label>Email</label><input id="ei-email" type="email" placeholder="instructor@lspu.edu.ph" /></div>
+          <div class="fg"><label>Primary Subject</label>
+            <select id="ei-subject">
+              <option value="">— Select Subject —</option>
+            </select>
+          </div>
+          <div class="fg"><label>College</label>
+            <select id="ei-college">
+              <option value="">— Select College —</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Campus</label>
+            <select id="ei-campus">
+              <option value="">— Select Campus —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-inst-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditInstructor()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Section Modal -->
+  <div class="overlay" id="add-sect-modal">
+    <div class="modal" style="width:500px">
+      <div class="modal-hdr">
+        <h2>Add Section</h2>
+        <button class="modal-close" onclick="closeModal('add-sect-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Sections are named after their program and
+          year level — e.g. <strong>IT 2A</strong>, <strong>CS 1B</strong>, <strong>IT WMAD 3A</strong>.</p>
+        <div class="form-grid">
+          <div class="fg full"><label>Section Name *</label><input id="sect-name" type="text"
+              placeholder="e.g. IT 2A" /></div>
+          <div class="fg"><label>Program *</label>
+            <select id="sect-program">
+              <option value="">— Select Program —</option>
+            </select>
+          </div>
+          <div class="fg"><label>Year Level *</label>
+            <select id="sect-year-level">
+              <option value="">— Select —</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Campus</label>
+            <select id="sect-campus">
+              <option value="">— Select Campus —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-sect-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewSection()"><i class="fas fa-save"></i> Save Section</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Section Modal -->
+  <div class="overlay" id="edit-sect-modal">
+    <div class="modal" style="width:min(500px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen" style="font-size:.9rem;margin-right:6px"></i> Edit Section</h2>
+        <button class="modal-close" onclick="closeModal('edit-sect-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="es-sect-id" />
+        <div class="form-grid">
+          <div class="fg full"><label>Section Name <span class="req">*</span></label><input id="es-sect-name" type="text" placeholder="e.g. IT 2A" /></div>
+          <div class="fg"><label>Program <span class="req">*</span></label>
+            <select id="es-sect-program">
+              <option value="">— Select Program —</option>
+            </select>
+          </div>
+          <div class="fg"><label>Year Level <span class="req">*</span></label>
+            <select id="es-sect-year-level">
+              <option value="">— Select —</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+          <div class="fg full"><label>Campus</label>
+            <select id="es-sect-campus">
+              <option value="">— Select Campus —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-sect-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditSection()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Students Modal -->
+  <div class="overlay" id="sect-students-modal">
+    <div class="modal" style="width:min(860px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-users" style="font-size:.9rem;margin-right:7px"></i> Students — <span id="sect-students-title"></span></h2>
+        <button class="modal-close" onclick="closeModal('sect-students-modal')">&times;</button>
+      </div>
+      <!-- Section detail strip -->
+      <div id="sect-students-detail-strip" style="display:none;padding:14px 24px;background:var(--blue-lt);border-bottom:1px solid var(--border);gap:0">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch">
+          <div style="display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:120px">
+            <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)"><i class="fas fa-sitemap" style="margin-right:4px;opacity:.7"></i>Section</span>
+            <span id="ssd-section" style="font-size:1rem;font-weight:700;color:var(--blue)">—</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:120px">
+            <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)"><i class="fas fa-layer-group" style="margin-right:4px;opacity:.7"></i>Year Level</span>
+            <span id="ssd-year" style="font-size:.95rem;font-weight:600;color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:160px">
+            <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)"><i class="fas fa-graduation-cap" style="margin-right:4px;opacity:.7"></i>Program</span>
+            <span id="ssd-program" style="font-size:.9rem;font-weight:600;color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:130px">
+            <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)"><i class="fas fa-map-marker-alt" style="margin-right:4px;opacity:.7"></i>Campus</span>
+            <span id="ssd-campus" style="font-size:.9rem;font-weight:600;color:var(--text)">—</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;background:var(--blue);border-radius:10px;padding:10px 16px;min-width:100px;justify-content:center;align-items:center;text-align:center">
+            <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.75)"><i class="fas fa-user-graduate" style="margin-right:4px"></i>Enrolled</span>
+            <span id="ssd-count" style="font-size:1.4rem;font-weight:700;color:#fff;line-height:1">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body" id="sect-students-body">
+        <div class="loading">Loading…</div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('sect-students-modal')"><i class="fas fa-times"></i> Close</button>
+        <button class="btn btn-gold" id="sect-students-edit-btn" onclick="editSectionFromStudentsModal()" style="display:none"><i class="fas fa-pen"></i> Edit Section</button>
+        <button class="btn btn-outline" onclick="printSectionStudents()" id="sect-students-print-btn"><i class="fas fa-print"></i> Print / PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Campus Modal -->
+  <div class="overlay" id="add-camp-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-map-marker-alt"></i> Add Campus</h2>
+        <button class="modal-close" onclick="closeModal('add-camp-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg full"><label>Campus Name *</label><input id="camp-name" type="text"
+              placeholder="e.g. LSPU Main Campus" /></div>
+          <div class="fg"><label>Barangay</label><input id="camp-barangay" type="text" placeholder="Barangay" /></div>
+          <div class="fg"><label>Municipality</label><input id="camp-municipality" type="text"
+              placeholder="Municipality" /></div>
+          <div class="fg"><label>Province</label><input id="camp-province" type="text" placeholder="Province" /></div>
+          <div class="fg"><label>Email</label><input id="camp-email" type="email" placeholder="campus@lspu.edu.ph" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-camp-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewCampus()"><i class="fas fa-plus"></i> Create Campus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Campus Modal -->
+  <div class="overlay" id="edit-camp-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-map-marker-alt"></i> Edit Campus</h2>
+        <button class="modal-close" onclick="closeModal('edit-camp-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ec-camp-id" />
+        <div class="form-grid">
+          <div class="fg full"><label>Campus Name *</label><input id="ec-camp-name" type="text" /></div>
+          <div class="fg"><label>Barangay</label><input id="ec-camp-barangay" type="text" /></div>
+          <div class="fg"><label>Municipality</label><input id="ec-camp-municipality" type="text" /></div>
+          <div class="fg"><label>Province</label><input id="ec-camp-province" type="text" /></div>
+          <div class="fg"><label>Email</label><input id="ec-camp-email" type="email" /></div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-camp-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditCampus()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Semester Modal -->
+  <div class="overlay" id="add-sem-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-calendar-alt"></i> Add Semester</h2>
+        <button class="modal-close" onclick="closeModal('add-sem-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg"><label>Semester Name *</label><input id="sem-name" type="text"
+              placeholder="e.g. 1st Semester" /></div>
+          <div class="fg"><label>Academic Year</label><input id="sem-academic-year" type="text"
+              placeholder="e.g. 2024-2025" /></div>
+          <div class="fg"><label>Start Date</label><input id="sem-start" type="date" /></div>
+          <div class="fg"><label>End Date</label><input id="sem-end" type="date" /></div>
+          <div class="fg">
+            <label>Status</label>
+            <select id="sem-status">
+              <option value="Closed">Closed</option>
+              <option value="Open">Open</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-sem-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewSemester()"><i class="fas fa-plus"></i> Create Semester</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Semester Modal -->
+  <div class="overlay" id="edit-sem-modal">
+    <div class="modal" style="width:520px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-calendar-alt"></i> Edit Semester</h2>
+        <button class="modal-close" onclick="closeModal('edit-sem-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="es-sem-id" />
+        <div class="form-grid">
+          <div class="fg"><label>Semester Name *</label><input id="es-sem-name" type="text" /></div>
+          <div class="fg"><label>Academic Year</label><input id="es-sem-academic-year" type="text" /></div>
+          <div class="fg"><label>Start Date</label><input id="es-sem-start" type="date" /></div>
+          <div class="fg"><label>End Date</label><input id="es-sem-end" type="date" /></div>
+          <div class="fg">
+            <label>Status</label>
+            <select id="es-sem-status">
+              <option value="Closed">Closed</option>
+              <option value="Open">Open</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-sem-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditSemester()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add College Modal -->
+  <div class="overlay" id="add-coll-modal">
+    <div class="modal" style="width:500px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-building"></i> Add College</h2>
+        <button class="modal-close" onclick="closeModal('add-coll-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg"><label>College Code *</label><input id="coll-code" type="text" placeholder="e.g. CCS" /></div>
+          <div class="fg"><label>College Name *</label><input id="coll-name" type="text"
+              placeholder="e.g. College of Computer Studies" /></div>
+          <div class="fg full"><label>Email</label><input id="coll-email" type="email"
+              placeholder="college@lspu.edu.ph" /></div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('add-coll-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewCollege()"><i class="fas fa-save"></i> Save College</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit College Modal -->
+  <div class="overlay" id="edit-coll-modal">
+    <div class="modal" style="width:500px">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-pen" style="font-size:.9rem;margin-right:6px"></i> Edit College</h2>
+        <button class="modal-close" onclick="closeModal('edit-coll-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ec-orig-code" />
+        <div class="form-grid">
+          <div class="fg"><label>College Code *</label><input id="ec-code" type="text" /></div>
+          <div class="fg"><label>College Name *</label><input id="ec-name" type="text" /></div>
+          <div class="fg full"><label>Email</label><input id="ec-email" type="email" /></div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('edit-coll-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditCollege()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin / User Management Modal (Super Admin only) -->
+  <div class="overlay" id="admin-modal">
+    <div class="modal" style="width:480px">
+      <div class="modal-hdr">
+        <h2>Add Staff Account</h2>
+        <button class="modal-close" onclick="closeModal('admin-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="fg"><label>First Name *</label><input id="adm-first" type="text" /></div>
+          <div class="fg"><label>Last Name *</label><input id="adm-last" type="text" /></div>
+          <div class="fg" style="grid-column:1/-1"><label>Email *</label><input id="adm-email" type="email" /></div>
+          <div class="fg"><label>Password *</label><input id="adm-pass" type="password" /></div>
+          <div class="fg">
+            <label>Role *</label>
+            <select id="adm-role">
+              <option value="Admin">Admin</option>
+              <option value="Registrar">Registrar</option>
+              <option value="Super Admin">Super Admin</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('admin-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAdminAccount()"><i class="fas fa-user-shield"></i> Create
+          Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="overlay" id="logout-modal">
+    <div class="modal" style="width:min(420px,95vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-power-off" style="color:var(--red);margin-right:8px"></i> Confirm Logout</h2>
+        <button class="modal-close" onclick="closeModal('logout-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:28px 24px">
+        <div style="font-size:2.5rem;margin-bottom:14px;color:var(--red);opacity:.8"><i class="fas fa-sign-out-alt"></i>
+        </div>
+        <p style="font-size:.95rem;color:var(--dark);margin-bottom:8px">Are you sure you want to log out of the admin
+          panel?</p>
+        <p style="font-size:.82rem;color:var(--muted)">Any unsaved changes will be lost.</p>
+      </div>
+      <div class="modal-ftr" style="justify-content:center;gap:12px">
+        <button class="btn btn-outline" onclick="closeModal('logout-modal')"><i class="fas fa-times"></i>
+          Cancel</button>
+        <button class="btn btn-danger" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Semester Open/Close Toggle Modal -->
+  <div class="overlay" id="sem-toggle-modal">
+    <div class="modal" style="width:min(440px,95vw)">
+      <div class="modal-hdr">
+        <h2><i id="sem-toggle-icon" class="fas fa-lock" style="margin-right:8px"></i><span id="sem-toggle-title">Toggle
+            Semester</span></h2>
+        <button class="modal-close" onclick="closeModal('sem-toggle-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <p id="sem-toggle-msg" style="font-size:.92rem;color:var(--dark);line-height:1.55"></p>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('sem-toggle-modal')"><i class="fas fa-times"></i>
+          Cancel</button>
+        <button id="sem-toggle-confirm-btn" class="btn btn-danger"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Deactivate/Activate Modal -->
+  <div class="overlay" id="admin-status-modal">
+    <div class="modal" style="width:min(420px,95vw)">
+      <div class="modal-hdr">
+        <h2><i id="admin-status-icon" class="fas fa-user-slash" style="margin-right:8px"></i><span
+            id="admin-status-title">Deactivate Account</span></h2>
+        <button class="modal-close" onclick="closeModal('admin-status-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <p id="admin-status-msg" style="font-size:.92rem;color:var(--dark);line-height:1.55"></p>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('admin-status-modal')"><i class="fas fa-times"></i>
+          Cancel</button>
+        <button id="admin-status-confirm-btn" class="btn btn-danger"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Change Role Modal -->
+  <div class="overlay" id="admin-role-modal">
+    <div class="modal" style="width:min(420px,95vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-user-tag" style="color:var(--blue);margin-right:8px"></i> Change Role</h2>
+        <button class="modal-close" onclick="closeModal('admin-role-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:24px">
+        <p style="font-size:.88rem;color:var(--muted);margin-bottom:14px">Current role: <strong id="role-current"
+            style="color:var(--dark)"></strong></p>
+        <div class="fg">
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted)">Select New Role</label>
+          <select id="role-select"
+            style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.9rem;outline:none;background:var(--surface);width:100%">
+            <option value="Admin">Admin</option>
+            <option value="Registrar">Registrar</option>
+            <option value="Super Admin">Super Admin</option>
+          </select>
+        </div>
+        <div
+          style="margin-top:14px;padding:10px 14px;background:var(--blue-lt);border-radius:8px;font-size:.81rem;color:var(--blue-dk)">
+          <i class="fas fa-info-circle"></i> Role changes take effect on the user's next login.
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('admin-role-modal')"><i class="fas fa-times"></i>
+          Cancel</button>
+        <button id="role-confirm-btn" class="btn btn-primary"><i class="fas fa-save"></i> Save Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- ══ STUDENT VIEW MODAL ════════════════════════════════════════════════ -->
+  <div class="overlay" id="stu-view-modal">
+    <div class="modal" style="width:min(820px,96vw)">
+      <div class="modal-hdr">
+        <h2 id="stu-view-title"><i class="fas fa-user-graduate"></i> Student Details</h2>
+        <button class="modal-close" onclick="closeModal('stu-view-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0">
+        <div id="stu-tabs"
+          style="display:flex;border-bottom:1px solid var(--border,#e5e7eb);padding:0 20px;gap:4px;background:var(--card,#fff)">
+          <button class="stu-tab active" data-tab="profile" onclick="switchStuTab('profile')"><i
+              class="fas fa-id-card"></i> Profile</button>
+          <button class="stu-tab" data-tab="grades" onclick="switchStuTab('grades')"><i
+              class="fas fa-star-half-alt"></i> Grades</button>
+          <button class="stu-tab" data-tab="payments" onclick="switchStuTab('payments')"><i
+              class="fas fa-money-bill-wave"></i> Payments</button>
+          <button class="stu-tab" data-tab="enrollment" onclick="switchStuTab('enrollment')"><i
+              class="fas fa-list-alt"></i> Enrollment</button>
+        </div>
+        <div id="stu-view-body">
+          <div class="loading" style="padding:40px 20px"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('stu-view-modal')">Close</button>
+        <button class="btn btn-outline" id="stu-view-status-btn"
+          onclick="closeModal('stu-view-modal');openStudentStatusModal(_stuViewId,(_stuViewData?.full_name||''),(_stuViewData?.Status||'Active'))">
+          <i class="fas fa-exchange-alt"></i> Change Status
+        </button>
+        <button class="btn btn-outline" onclick="printStudentRecord()" id="stu-print-btn" title="Print or save as PDF">
+          <i class="fas fa-print"></i> Print / PDF
+        </button>
+        <button class="btn btn-gold" onclick="openStudentEdit(_stuViewId)">
+          <i class="fas fa-pen"></i> Edit Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ APPLICANT CREDENTIALS MODAL ══════════════════════════════════════════ -->
+  <div class="overlay" id="cred-modal">
+    <div class="modal" style="width:min(460px,95vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-key"></i> Applicant Credentials</h2>
+        <button class="modal-close" onclick="closeModal('cred-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div
+          style="background:var(--green-lt);border:1px solid var(--green);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:.85rem;color:var(--green)">
+          <i class="fas fa-check-circle"></i> <strong>Applicant created successfully.</strong>
+          Copy these credentials and send them to the applicant — the password <strong>cannot be retrieved
+            again</strong>.
+        </div>
+        <div class="info-grid"
+          style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <div class="info-cell" style="grid-column:1/-1">
+            <div class="info-key">Applicant</div>
+            <div class="info-val" id="cred-name" style="font-weight:700;font-size:1rem"></div>
+          </div>
+          <div class="info-cell">
+            <div class="info-key">Internal ID</div>
+            <div class="info-val" id="cred-id"></div>
+          </div>
+          <div class="info-cell">
+            <div class="info-key">Login Email</div>
+            <div class="info-val" id="cred-email" style="word-break:break-all"></div>
+          </div>
+          <div class="info-cell" style="grid-column:1/-1">
+            <div class="info-key">Temporary Password</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+              <code id="cred-pass"
+                style="font-size:1.05rem;letter-spacing:.08em;background:var(--gold-lt);padding:6px 12px;border-radius:6px;flex:1"></code>
+              <button class="btn btn-outline btn-sm" onclick="copyCredentials()" title="Copy credentials to clipboard">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.78rem;color:var(--muted)"><i class="fas fa-info-circle"></i> The applicant can log in at
+          the portal with their email and this temporary password. They should change it after first login.</p>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="copyCredentials()"><i class="fas fa-copy"></i> Copy All</button>
+        <button class="btn btn-primary" onclick="closeModal('cred-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STUDENT STATUS EDIT MODAL ══════════════════════════════════════════ -->
+  <div class="overlay" id="stu-status-modal">
+    <div class="modal" style="width:min(400px,95vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-exchange-alt"></i> Change Student Status</h2>
+        <button class="modal-close" onclick="closeModal('stu-status-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="stu-status-name" style="font-weight:600;font-size:1rem;margin-bottom:14px"></p>
+        <div class="fg">
+          <label>New Status <span style="color:var(--red)">*</span></label>
+          <select id="stu-status-sel">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="LOA">LOA (Leave of Absence)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('stu-status-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmStudentStatus()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STUDENT EDIT MODAL ═══════════════════════════════════════════════════ -->
+  <div class="overlay" id="stu-edit-modal">
+    <div class="modal" style="width:min(560px,96vw)">
+      <div class="modal-hdr">
+        <h2><i class="fas fa-user-edit"></i> Edit Student Record</h2>
+        <button class="modal-close" onclick="closeModal('stu-edit-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="se-id" />
+        <p id="se-name" style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--blue)"></p>
+        <div class="form-grid">
+          <div class="fg">
+            <label>Year Level</label>
+            <select id="se-year">
+              <option value="">— unchanged —</option>
+              <option>1st Year</option>
+              <option>2nd Year</option>
+              <option>3rd Year</option>
+              <option>4th Year</option>
+              <option>5th Year</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Campus</label>
+            <select id="se-campus" onchange="_loadSeSections(this.value)">
+              <option value="">— unchanged —</option>
+            </select>
+          </div>
+          <div class="fg full">
+            <label>Program</label>
+            <select id="se-program">
+              <option value="">— unchanged —</option>
+            </select>
+          </div>
+          <div class="fg full">
+            <label>Section</label>
+            <select id="se-section">
+              <option value="">— unchanged —</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Email</label>
+            <input id="se-email" type="email" placeholder="Leave blank to keep current" />
+          </div>
+          <div class="fg">
+            <label>Contact Number</label>
+            <input id="se-contact" type="tel" placeholder="Leave blank to keep current" maxlength="15" />
+          </div>
+        </div>
+        <p style="font-size:.77rem;color:var(--muted);margin-top:14px">
+          <i class="fas fa-info-circle"></i> Only the fields you change will be updated. Name and other personal details
+          must be edited via the linked applicant record.
+        </p>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('stu-edit-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStudentEdit()"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ENROLL CONVERSION MODAL ══════════════════════════════════════════ -->
+  <div class="overlay" id="enroll-modal">
+    <div class="modal" style="width:min(520px,95vw)">
+      <div class="modal-hdr">
+        <h2 id="enroll-modal-title"><i class="fas fa-user-graduate"></i> Confirm Enrollment</h2>
+        <button class="modal-close" onclick="closeModal('enroll-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="enroll-modal-desc" style="font-size:.84rem;color:var(--muted);margin-bottom:16px"></p>
+
+        <!-- Completeness warning (single mode only) -->
+        <div id="enroll-warn"
+          style="display:none;background:var(--gold-lt);border:1px solid var(--gold);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.82rem;color:#7a5000;line-height:1.5">
+        </div>
+
+        <!-- Single applicant summary -->
+        <div id="enroll-summary"
+          style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:.85rem;line-height:2;display:none">
+          <strong id="enroll-name" style="font-size:1rem"></strong><br>
+          <span id="enroll-program" style="color:var(--blue);font-weight:600"></span>
+          &nbsp;·&nbsp; <span id="enroll-campus" style="color:var(--muted)"></span><br>
+          Year Level: <span id="enroll-year-display" style="font-weight:600"></span>
+          &nbsp;·&nbsp; Type: <span id="enroll-type" style="color:var(--muted)"></span>
+        </div>
+
+        <!-- Bulk summary -->
+        <div id="enroll-bulk-summary"
+          style="background:var(--blue-lt);border:1px solid var(--blue);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:.85rem;display:none">
+          <i class="fas fa-users" style="color:var(--blue);margin-right:6px"></i>
+          <span id="enroll-bulk-count-text" style="font-weight:600;color:var(--blue-dk)"></span>
+        </div>
+
+        <div style="display:grid;gap:14px">
+          <div class="fg">
+            <label>Year Level <span style="color:var(--muted);font-weight:400;font-size:.75rem">(optional
+                override)</span></label>
+            <select id="enroll-year-level">
+              <option value="">— keep from application —</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+              <option value="5th Year">5th Year</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Section <span style="color:var(--error)">*</span></label>
+            <select id="enroll-section">
+              <option value="">Loading sections…</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Semester <span style="color:var(--error)">*</span></label>
+            <select id="enroll-semester">
+              <option value="">Loading semesters…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-outline" onclick="closeModal('enroll-modal')">Cancel</button>
+        <button class="btn btn-success" id="enroll-confirm-btn" onclick="confirmEnrollment()">
+          <i class="fas fa-user-graduate"></i> Confirm Enrollment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PRINT / PDF — Student Record ════════════════════════════════════════ -->
+  <div id="print-frame" style="display:none" aria-hidden="true"></div>
+
+  <!-- ══ Externalized JavaScript ════════════════════════════════════════ -->
+  <script src="admin.js"></script>
+</body>
+</html>
