@@ -1,5 +1,3 @@
-document.getElementById('applicationPage').classList.remove('hidden');
-
 /* ══════════════════════════════════════════════════════════
    STUDENT ID — stamp the hidden applicant_id fields in every
    step form so they are ready before the user submits.
@@ -10,11 +8,18 @@ document.querySelectorAll('.js-student-id').forEach(function (el) {
 
 /* ══════════════════════════════════════════════════════════
    PRE-FILL FORM FROM DATABASE ON PAGE LOAD
+   The page stays hidden (.hidden class) until the profile
+   fetch resolves so we never show a blank/unstyled flash.
 ══════════════════════════════════════════════════════════ */
 (async function loadProfile() {
     try {
         const res  = await fetch('save_profile.php');
         const data = await res.json();
+
+        // Reveal the page regardless of data.ok — the user
+        // still needs to see the form even on a fresh account.
+        document.getElementById('applicationPage').classList.remove('hidden');
+
         if (!data.ok) return;
 
         const d = data.data;
@@ -132,6 +137,8 @@ document.querySelectorAll('.js-student-id').forEach(function (el) {
 
     } catch (e) {
         console.warn('Could not pre-fill profile:', e);
+        // Still reveal the page so the user can fill in the form manually.
+        document.getElementById('applicationPage').classList.remove('hidden');
     }
 })();
 

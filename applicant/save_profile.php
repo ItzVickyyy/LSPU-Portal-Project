@@ -1,5 +1,4 @@
 <?php
-
 /**
  * save_profile.php — LSPU Applicant Profile Save Handler
  * Handles step=1..5 and step=submit from applicant_profile.php
@@ -152,6 +151,11 @@ if ($step === '2') {
     $first_gen  = pNull('First_Generation_Student');
 
     if (!$first || !$last) respond(false, 'First and last name are required.');
+    if (!$birthday)   respond(false, 'Birthdate is required.');
+    if (!$birth_place) respond(false, 'Place of birth is required.');
+    if (!$citizenship) respond(false, 'Citizenship is required.');
+    if (!$contact)    respond(false, 'Contact number is required.');
+    if (!$email)      respond(false, 'Email address is required.');
 
     if ($email !== null) {
         $chk = db()->prepare(
@@ -239,9 +243,12 @@ if ($step === '3') {
     $sql = "INSERT INTO family_info (applicant_id, $cols) VALUES (?, $phs)
             ON DUPLICATE KEY UPDATE $updates";
 
-    $types = 'i'; // student_id
+    $types = 'i'; // applicant_id
     foreach ($data as $key => $val) {
-        $types .= ($key === 'father_age' || $key === 'mother_age') ? 'i' : 's';
+        // father_age and mother_age use pInt() and may be null.
+        // Binding null as 'i' converts it to 0 in MySQLi, corrupting the row.
+        // Binding as 's' preserves NULL correctly.
+        $types .= 's';
     }
     $values = array_merge([$applicant_id], array_values($data));
     $stmt = db()->prepare($sql);

@@ -15,9 +15,7 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LSPU Applicant Profile</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="applicant_profile.css">
 </head>
@@ -25,7 +23,6 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
 <body>
     <!-- PROFILE APPLICATION PAGE -->
     <div class="application-page hidden" id="applicationPage">
-
         <!-- TOP NAV -->
         <div class="topbar">
             <div class="brand">
@@ -46,7 +43,6 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
 
         <!-- MAIN CONTENT -->
         <div class="application-wrapper">
-
             <!-- PROFILE CARD -->
             <div class="profile-card">
                 <div class="profile-left">
@@ -63,12 +59,11 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
 
             <!-- ACCORDION -->
             <div class="accordion-container">
-
                 <!-- ══════════════════════════════════════════════
                      STEP 1 — CAMPUS SELECTION
                 ══════════════════════════════════════════════ -->
                 <div class="accordion-item">
-                    <button class="accordion-header active">
+                    <button class="accordion-header active open">
                         <span><span class="step-badge">Step 1</span> CAMPUS SELECTION</span>
                         <span class="accordion-chevron">⌄</span>
                     </button>
@@ -776,9 +771,9 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
                     </div>
                 </div>
 
-            </div><!-- /.accordion-container -->
-        </div><!-- /.application-wrapper -->
-    </div><!-- /.application-page -->
+            </div>
+        </div>
+    </div>
 
     <script>
         const APPLICANT_ID = <?php echo $applicant_id; ?>;
@@ -790,5 +785,4 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
     </script>
     <script src="applicant_profile.js" defer></script>
 </body>
-
 </html>
