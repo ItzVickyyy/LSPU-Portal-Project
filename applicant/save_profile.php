@@ -1,7 +1,7 @@
 <?php
 /**
  * save_profile.php — LSPU Applicant Profile Save Handler
- * Handles step=1..5 and step=submit from applicant_profile.php
+ * Handles step=1 — 5 and step=submit from applicant_profile.php
  * Responds with JSON.
  */
 require_once __DIR__ . '/../api/config.php';

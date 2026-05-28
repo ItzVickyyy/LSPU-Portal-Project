@@ -770,7 +770,6 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>

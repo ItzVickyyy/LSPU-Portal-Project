@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Status Checker — LSPU Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='status_checker.css') }}">
+</head>
+<body>
+
+    <!-- ═══ MAIN CARD ═══ -->
+    <div class="page">
+        <div class="card">
+
+            <!-- Brand -->
+            <div class="brand">
+                <div class="brand-logo">
+                    <img src="{{ url_for('static', filename='LSPU_Logo.png') }}"
+                         onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa fa-university\' style=\'font-size:2rem;color:#0B5ED7\'></i>'"
+                         alt="LSPU Logo">
+                </div>
+                <h1>LSPU Portal</h1>
+                <p>Laguna State Polytechnic University</p>
+            </div>
+
+            <!-- Eyebrow divider -->
+            <div class="section-eyebrow">
+                <span>Application Status Checker</span>
+            </div>
+
+            <!-- Subtitle -->
+            <div class="page-title">
+                <p>Enter the email address you used to register and we'll pull up your application.</p>
+            </div>
+
+            <!-- Error alert -->
+            <div class="alert alert-error" id="err-alert"></div>
+
+            <!-- Email field — plain input, no icon overlay -->
+            <div class="field">
+                <label for="email-input">Email Address <span class="req">*</span></label>
+                <input
+                    type="email"
+                    id="email-input"
+                    placeholder="e.g. juandelacruz@gmail.com"
+                    autocomplete="email"
+                    onkeydown="if(event.key==='Enter') checkStatus()"
+                >
+            </div>
+
+            <button class="btn btn-primary" id="check-btn" onclick="checkStatus()">
+                <i class="fa fa-magnifying-glass" style="margin-right:8px;"></i>Check My Application
+            </button>
+
+            <div class="divider">or</div>
+
+            <a class="btn btn-outline" href="http://localhost/ADS-Portal_Project/index.html">
+                <i class="fa fa-arrow-left"></i> Back to Portal Login
+            </a>
+
+            <div class="link-text">
+                Need help? <a href="mailto:registrar@lspu.edu.ph">Contact the Registrar</a>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ═══ RESULT MODAL ═══ -->
+    <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+        <div class="modal-box" id="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+
+            <button class="modal-close" onclick="closeModal()" aria-label="Close">
+                <i class="fa fa-times"></i>
+            </button>
+
+            <!-- Hero banner -->
+            <div class="modal-hero" id="modal-hero">
+                <div class="modal-hero-inner">
+                    <div class="modal-status-icon" id="modal-icon"></div>
+                    <div style="color:inherit;">
+                        <div class="modal-name" id="modal-name"></div>
+                        <div class="modal-email-text" id="modal-email"></div>
+                        <div class="modal-badge" id="modal-badge"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <div class="modal-message" id="modal-message"></div>
+                <div class="detail-section-label">Application Details</div>
+                <div class="modal-grid" id="modal-grid"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal()" style="display:flex;align-items:center;justify-content:center;gap:7px;">
+                    <i class="fa fa-check"></i> Got it
+                </button>
+                <a href="mailto:registrar@lspu.edu.ph" class="btn btn-outline">
+                    <i class="fa fa-envelope"></i>Contact Registrar
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toast-icon">✓</span>
+        <span id="toast-msg"></span>
+    </div>
+
+
+    <script>
+        const el = id => document.getElementById(id);
+
+        /* Status colour themes — matched to index palette */
+        const STATUS_THEMES = {
+            'Draft':     { bg: '#f1f5fd', text: '#1e3a6e', border: '#c3d4f5', leftAccent: '#4a80d4' },
+            'Submitted': { bg: '#eef5ff', text: '#0e3580', border: '#b8d0f8', leftAccent: '#0B5ED7' },
+            'Enrolled':  { bg: '#ecf7ef', text: '#14532d', border: '#a7d7b5', leftAccent: '#1a6b3c' },
+        };
+
+        /* Alert */
+        function showAlert(msg) {
+            const a = el('err-alert');
+            a.textContent = msg;
+            a.classList.add('show');
+        }
+        function hideAlert() {
+            const a = el('err-alert');
+            a.textContent = '';
+            a.classList.remove('show');
+        }
+
+        /* Toast — matches index.js pattern */
+        let toastTimer;
+        function showToast(msg, type = 'success') {
+            const t = el('toast');
+            const icon = el('toast-icon');
+            el('toast-msg').textContent = msg;
+            t.className = 'toast show ' + type;
+            icon.textContent = type === 'success' ? '✓' : '✕';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        /* Loading state */
+        function setLoading(on) {
+            const btn = el('check-btn');
+            btn.disabled = on;
+            btn.innerHTML = on
+                ? '<span class="spinner"></span>Checking…'
+                : '<i class="fa fa-magnifying-glass" style="margin-right:8px;"></i>Check My Application';
+        }
+
+        /* Modal open / close */
+        function openModal() {
+            el('modal-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => el('modal-box').classList.add('visible'), 12);
+        }
+        function closeModal() {
+            el('modal-box').classList.remove('visible');
+            setTimeout(() => {
+                el('modal-overlay').classList.remove('open');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+        function handleOverlayClick(e) {
+            if (e.target === el('modal-overlay')) closeModal();
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && el('modal-overlay').classList.contains('open')) closeModal();
+        });
+
+        /* Build detail grid */
+        function buildGrid(data) {
+            const items = [
+                { icon: 'fa-building-columns', label: 'Campus',       value: data.campus },
+                { icon: 'fa-book-open',        label: 'Program',      value: data.spec ? `${data.program} (${data.spec})` : data.program },
+                { icon: 'fa-layer-group',      label: 'Year Level',   value: data.year_level },
+                { icon: 'fa-id-card',          label: 'Student Type', value: data.student_type },
+            ];
+            return items.map(i => `
+                <div class="modal-detail-item">
+                    <div class="mdi-icon"><i class="fa ${i.icon}"></i></div>
+                    <div>
+                        <div class="mdi-label">${i.label}</div>
+                        <div class="mdi-value">${i.value}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /* Main check */
+        async function checkStatus() {
+            hideAlert();
+            const email = el('email-input').value.trim();
+
+            if (!email) {
+                showAlert('Please enter your email address.');
+                el('email-input').focus();
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showAlert('Please enter a valid email address.');
+                el('email-input').focus();
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const res  = await fetch('/check', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ email }),
+                });
+                const data = await res.json();
+
+                if (!data.ok) {
+                    showAlert(data.msg || 'Something went wrong. Please try again.');
+                    showToast(data.msg || 'Not found', 'error');
+                    return;
+                }
+
+                /* Populate modal */
+                const theme = STATUS_THEMES[data.status] || STATUS_THEMES['Draft'];
+
+                el('modal-icon').textContent    = data.icon;
+                el('modal-name').textContent    = data.name;
+                el('modal-email').textContent   = data.email;
+                el('modal-badge').textContent   = data.label;
+                el('modal-message').textContent = data.message;
+                el('modal-grid').innerHTML      = buildGrid(data);
+
+                /* Hero banner styling */
+                const hero = el('modal-hero');
+                hero.style.background   = theme.bg;
+                hero.style.color        = theme.text;
+                hero.style.borderBottom = `1.5px solid ${theme.border}`;
+                el('modal-message').style.borderLeftColor = theme.leftAccent;
+
+                openModal();
+                showToast('Application found!', 'success');
+
+            } catch (err) {
+                showAlert('Network error. Please check your connection and try again.');
+                showToast('Network error', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>

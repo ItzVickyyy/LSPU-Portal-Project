@@ -28,6 +28,13 @@ Advance_Database_System_Final/
 │   ├── db_archive/
 │   │   └── (Tons of backup file)
 │   └── lspu_portal_v2.67.sql
+├── status_checker/
+│   ├── static/
+│   │   ├── LSPU_Logo.png
+│   │   └── status_checker.css
+│   ├── templates/
+│   │   └── status_checker.html
+│   └── app.py
 ├── index.html
 ├── index.js
 └── README.txt
