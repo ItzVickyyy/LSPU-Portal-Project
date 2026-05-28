@@ -8,6 +8,7 @@ Access on same network: http://<your-ip>:5000
 from flask import Flask, render_template, request, jsonify
 import mysql.connector
 from mysql.connector import Error
+import socket
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ app = Flask(__name__)
 DB_CONFIG = {
     'host':     'localhost',
     'user':     'root',
-    'password': '',          # XAMPP default (blank)
+    'password': '',
     'database': 'lspu_portal',
     'charset':  'utf8mb4',
 }
@@ -50,19 +51,32 @@ STATUS_META = {
 
 
 def get_db():
-    """Open a short-lived DB connection."""
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         return conn
-    except Error as e:
+    except Error:
         return None
+
+
+def get_local_ip():
+    """Get the machine's local network IP for QR code generation."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return '127.0.0.1'
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
-    return render_template('status_checker.html')
+    local_ip  = get_local_ip()
+    portal_url = f'http://{local_ip}:5000'
+    return render_template('status_checker.html', portal_url=portal_url)
 
 
 @app.route('/check', methods=['POST'])
@@ -87,6 +101,7 @@ def check_status():
                 a.Last_Name,
                 a.Email,
                 a.application_status,
+                a.updated_at,
                 ai.campus,
                 ai.student_type,
                 ai.year_level,
@@ -94,8 +109,8 @@ def check_status():
                 ic.Program_Code,
                 ic.Specialization
             FROM applicants a
-            LEFT JOIN admission_info    ai ON ai.applicant_id = a.id
-            LEFT JOIN intended_course   ic ON ic.applicant_id = a.id
+            LEFT JOIN admission_info  ai ON ai.applicant_id = a.id
+            LEFT JOIN intended_course ic ON ic.applicant_id = a.id
             WHERE a.Email = %s
             LIMIT 1
             """,
@@ -110,22 +125,30 @@ def check_status():
         status_key = row.get('application_status') or 'Draft'
         meta       = STATUS_META.get(status_key, STATUS_META['Draft'])
 
+        # Format updated_at timestamp
+        updated_at = row.get('updated_at')
+        if updated_at:
+            updated_str = updated_at.strftime('%B %d, %Y at %I:%M %p')
+        else:
+            updated_str = 'Not available'
+
         return jsonify({
-            'ok':         True,
-            'name':       f"{row['First_Name']} {row['Last_Name']}",
-            'email':      row['Email'],
-            'status':     status_key,
-            'label':      meta['label'],
-            'icon':       meta['icon'],
-            'color':      meta['color'],
-            'bg':         meta['bg'],
-            'border':     meta['border'],
-            'message':    meta['message'],
-            'campus':     row.get('campus')       or '—',
-            'program':    row.get('Program_Code') or '—',
-            'spec':       row.get('Specialization') or '',
-            'year_level': row.get('year_level')   or '—',
-            'student_type': row.get('student_type') or '—',
+            'ok':           True,
+            'name':         f"{row['First_Name']} {row['Last_Name']}",
+            'email':        row['Email'],
+            'status':       status_key,
+            'label':        meta['label'],
+            'icon':         meta['icon'],
+            'color':        meta['color'],
+            'bg':           meta['bg'],
+            'border':       meta['border'],
+            'message':      meta['message'],
+            'updated_at':   updated_str,
+            'campus':       row.get('campus')         or '—',
+            'program':      row.get('Program_Code')   or '—',
+            'spec':         row.get('Specialization') or '',
+            'year_level':   row.get('year_level')     or '—',
+            'student_type': row.get('student_type')   or '—',
         })
 
     except Error as e:
@@ -138,5 +161,4 @@ def check_status():
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    # host='0.0.0.0' makes it accessible from other devices on the same network
     app.run(host='0.0.0.0', port=5000, debug=True)

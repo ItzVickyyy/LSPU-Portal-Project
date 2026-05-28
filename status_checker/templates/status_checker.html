@@ -35,10 +35,19 @@
                 <p>Enter the email address you used to register and we'll pull up your application.</p>
             </div>
 
+            <!-- Search history (shown only when history exists) -->
+            <div id="history-section" style="display:none;">
+                <div class="history-label">Recent Searches</div>
+                <div class="history-chips" id="history-chips"></div>
+                <button class="history-clear" onclick="clearHistory()">
+                    <i class="fa fa-trash" style="font-size:.65rem;margin-right:3px;"></i> Clear history
+                </button>
+            </div>
+
             <!-- Error alert -->
             <div class="alert alert-error" id="err-alert"></div>
 
-            <!-- Email field — plain input, no icon overlay -->
+            <!-- Email field -->
             <div class="field">
                 <label for="email-input">Email Address <span class="req">*</span></label>
                 <input
@@ -56,7 +65,7 @@
 
             <div class="divider">or</div>
 
-            <a class="btn btn-outline" href="http://localhost/ADS-Portal_Project/index.html">
+            <a class="btn btn-outline" href="http://localhost/Advance_Database_System_Final/index.html">
                 <i class="fa fa-arrow-left"></i> Back to Portal Login
             </a>
 
@@ -90,19 +99,67 @@
 
             <!-- Body -->
             <div class="modal-body">
+
+                <!-- Status message -->
                 <div class="modal-message" id="modal-message"></div>
+
+                <!-- Last updated timestamp -->
+                <div class="modal-timestamp" id="modal-timestamp">
+                    <i class="fa fa-clock"></i>
+                    <span>Last updated: <span id="modal-updated-at">—</span></span>
+                </div>
+
+                <!-- Application Details -->
                 <div class="detail-section-label">Application Details</div>
                 <div class="modal-grid" id="modal-grid"></div>
+
             </div>
 
-            <!-- Footer -->
+            <!-- Footer actions -->
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="closeModal()" style="display:flex;align-items:center;justify-content:center;gap:7px;">
+                <button class="btn btn-primary" onclick="closeModal()"
+                        style="display:flex;align-items:center;justify-content:center;gap:7px;">
                     <i class="fa fa-check"></i> Got it
                 </button>
+                <button class="btn-print" onclick="printStatus()" title="Save as PDF or Print">
+                    <i class="fa fa-print"></i> Save / Print
+                </button>
                 <a href="mailto:registrar@lspu.edu.ph" class="btn btn-outline">
-                    <i class="fa fa-envelope"></i>Contact Registrar
+                    <i class="fa fa-envelope"></i> Registrar
                 </a>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ═══ QR CODE FAB + MODAL (desktop only) ═══ -->
+
+    <!-- Floating action button -->
+    <button class="qr-fab" onclick="openQr()" aria-label="Show QR Code" title="Scan to open on phone">
+        <i class="fa fa-qrcode"></i>
+    </button>
+
+    <!-- QR modal overlay -->
+    <div class="qr-overlay" id="qr-overlay" onclick="handleQrOverlayClick(event)">
+        <div class="qr-box" id="qr-box">
+
+            <button class="qr-close" onclick="closeQr()" aria-label="Close QR">
+                <i class="fa fa-times"></i>
+            </button>
+
+            <div class="qr-title">Open on Your Phone</div>
+            <p class="qr-subtitle">Scan this QR code with your phone's camera<br>to open the status checker.</p>
+
+            <div class="qr-image-wrap">
+                <!-- QR generated via free public API — no key needed -->
+                <img id="qr-img"
+                     src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ portal_url }}&color=0B5ED7"
+                     alt="QR Code">
+            </div>
+
+            <div class="qr-url">
+                <strong>{{ portal_url }}</strong>
             </div>
 
         </div>
@@ -119,38 +176,39 @@
     <script>
         const el = id => document.getElementById(id);
 
-        /* Status colour themes — matched to index palette */
+        /* ─── Status colour themes ─── */
         const STATUS_THEMES = {
             'Draft':     { bg: '#f1f5fd', text: '#1e3a6e', border: '#c3d4f5', leftAccent: '#4a80d4' },
             'Submitted': { bg: '#eef5ff', text: '#0e3580', border: '#b8d0f8', leftAccent: '#0B5ED7' },
             'Enrolled':  { bg: '#ecf7ef', text: '#14532d', border: '#a7d7b5', leftAccent: '#1a6b3c' },
         };
 
-        /* Alert */
+        /* ─── Last result (for print) ─── */
+        let lastResult = null;
+
+        /* ─── Alert ─── */
         function showAlert(msg) {
             const a = el('err-alert');
             a.textContent = msg;
             a.classList.add('show');
         }
         function hideAlert() {
-            const a = el('err-alert');
-            a.textContent = '';
-            a.classList.remove('show');
+            el('err-alert').textContent = '';
+            el('err-alert').classList.remove('show');
         }
 
-        /* Toast — matches index.js pattern */
+        /* ─── Toast ─── */
         let toastTimer;
         function showToast(msg, type = 'success') {
             const t = el('toast');
-            const icon = el('toast-icon');
             el('toast-msg').textContent = msg;
+            el('toast-icon').textContent = type === 'success' ? '✓' : '✕';
             t.className = 'toast show ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
         }
 
-        /* Loading state */
+        /* ─── Loading state ─── */
         function setLoading(on) {
             const btn = el('check-btn');
             btn.disabled = on;
@@ -159,7 +217,58 @@
                 : '<i class="fa fa-magnifying-glass" style="margin-right:8px;"></i>Check My Application';
         }
 
-        /* Modal open / close */
+        /* ════════════════════════════
+           SEARCH HISTORY (localStorage)
+        ════════════════════════════ */
+        const HISTORY_KEY = 'lspu_status_history';
+        const MAX_HISTORY = 3;
+
+        function loadHistory() {
+            try {
+                return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            } catch { return []; }
+        }
+
+        function saveToHistory(email) {
+            let hist = loadHistory().filter(e => e !== email);
+            hist.unshift(email);
+            if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            localStorage.removeItem(HISTORY_KEY);
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const hist    = loadHistory();
+            const section = el('history-section');
+            const chips   = el('history-chips');
+
+            if (hist.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            chips.innerHTML = hist.map(email => `
+                <button class="history-chip" onclick="useHistory('${email}')">
+                    <i class="fa fa-clock-rotate-left"></i>${email}
+                </button>
+            `).join('');
+        }
+
+        function useHistory(email) {
+            el('email-input').value = email;
+            hideAlert();
+            checkStatus();
+        }
+
+        /* ════════════════════════════
+           RESULT MODAL
+        ════════════════════════════ */
         function openModal() {
             el('modal-overlay').classList.add('open');
             document.body.style.overflow = 'hidden';
@@ -175,11 +284,99 @@
         function handleOverlayClick(e) {
             if (e.target === el('modal-overlay')) closeModal();
         }
+
+        /* ════════════════════════════
+           QR MODAL
+        ════════════════════════════ */
+        function openQr() {
+            el('qr-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => el('qr-box').classList.add('visible'), 12);
+        }
+        function closeQr() {
+            el('qr-box').classList.remove('visible');
+            setTimeout(() => {
+                el('qr-overlay').classList.remove('open');
+                document.body.style.overflow = '';
+            }, 280);
+        }
+        function handleQrOverlayClick(e) {
+            if (e.target === el('qr-overlay')) closeQr();
+        }
+
+        /* Escape key closes whichever modal is open */
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && el('modal-overlay').classList.contains('open')) closeModal();
+            if (e.key !== 'Escape') return;
+            if (el('modal-overlay').classList.contains('open')) closeModal();
+            if (el('qr-overlay').classList.contains('open'))   closeQr();
         });
 
-        /* Build detail grid */
+        /* ════════════════════════════
+           PRINT / SAVE AS PDF
+        ════════════════════════════ */
+        function printStatus() {
+            if (!lastResult) return;
+            const d = lastResult;
+
+            const win = window.open('', '_blank');
+            win.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Application Status — ${d.name}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'DM Sans',sans-serif; color:#0d1f14; background:#fff; padding:40px; max-width:600px; margin:0 auto; }
+        .header { text-align:center; border-bottom:2px solid #0B5ED7; padding-bottom:20px; margin-bottom:24px; }
+        .header h1 { font-family:'DM Serif Display',serif; color:#0B5ED7; font-size:1.6rem; margin-bottom:4px; }
+        .header p  { font-size:.82rem; color:#6b7a6e; }
+        .name-row  { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+        .status-icon { font-size:2.4rem; }
+        .applicant-name { font-family:'DM Serif Display',serif; font-size:1.3rem; }
+        .applicant-email{ font-size:.82rem; color:#6b7a6e; margin-top:3px; }
+        .badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:.72rem; font-weight:700; margin-top:6px; letter-spacing:.03em; }
+        .message-box { background:#f7f5f0; border-left:3px solid #0B5ED7; padding:12px 15px; border-radius:8px; font-size:.85rem; color:#6b7a6e; line-height:1.7; margin-bottom:20px; }
+        .timestamp   { font-size:.75rem; color:#6b7a6e; margin-bottom:20px; }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+        .detail { background:#f7f5f0; border:1px solid #d8e0da; border-radius:8px; padding:12px 13px; }
+        .dlabel { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#6b7a6e; margin-bottom:3px; }
+        .dvalue { font-size:.88rem; font-weight:600; }
+        .footer { text-align:center; font-size:.75rem; color:#6b7a6e; border-top:1px solid #d8e0da; padding-top:16px; }
+        @media print { body { padding:20px; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LSPU Portal</h1>
+        <p>Laguna State Polytechnic University — Application Status Report</p>
+    </div>
+    <div class="name-row">
+        <span class="status-icon">${d.icon}</span>
+        <div>
+            <div class="applicant-name">${d.name}</div>
+            <div class="applicant-email">${d.email}</div>
+            <span class="badge" style="background:${d.bg};color:${d.color};border:1px solid ${d.border};">${d.label}</span>
+        </div>
+    </div>
+    <div class="message-box">${d.message}</div>
+    <div class="timestamp"><i>Last updated: ${d.updated_at}</i></div>
+    <div class="grid">
+        <div class="detail"><div class="dlabel">Campus</div><div class="dvalue">${d.campus}</div></div>
+        <div class="detail"><div class="dlabel">Program</div><div class="dvalue">${d.spec ? d.program + ' (' + d.spec + ')' : d.program}</div></div>
+        <div class="detail"><div class="dlabel">Year Level</div><div class="dvalue">${d.year_level}</div></div>
+        <div class="detail"><div class="dlabel">Student Type</div><div class="dvalue">${d.student_type}</div></div>
+    </div>
+    <div class="footer">Generated on ${new Date().toLocaleString()} · LSPU Student Portal</div>
+    <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`);
+            win.document.close();
+        }
+
+        /* ════════════════════════════
+           BUILD DETAIL GRID
+        ════════════════════════════ */
         function buildGrid(data) {
             const items = [
                 { icon: 'fa-building-columns', label: 'Campus',       value: data.campus },
@@ -198,7 +395,9 @@
             `).join('');
         }
 
-        /* Main check */
+        /* ════════════════════════════
+           MAIN CHECK
+        ════════════════════════════ */
         async function checkStatus() {
             hideAlert();
             const email = el('email-input').value.trim();
@@ -230,6 +429,12 @@
                     return;
                 }
 
+                /* Save to history */
+                saveToHistory(email);
+
+                /* Cache for print */
+                lastResult = data;
+
                 /* Populate modal */
                 const theme = STATUS_THEMES[data.status] || STATUS_THEMES['Draft'];
 
@@ -238,6 +443,7 @@
                 el('modal-email').textContent   = data.email;
                 el('modal-badge').textContent   = data.label;
                 el('modal-message').textContent = data.message;
+                el('modal-updated-at').textContent = data.updated_at;
                 el('modal-grid').innerHTML      = buildGrid(data);
 
                 /* Hero banner styling */
@@ -257,6 +463,9 @@
                 setLoading(false);
             }
         }
+
+        /* ─── Init: render history on page load ─── */
+        renderHistory();
     </script>
 </body>
 </html>
