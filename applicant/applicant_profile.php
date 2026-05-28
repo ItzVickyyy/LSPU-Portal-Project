@@ -18,6 +18,7 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="applicant_profile.css">
+    <link rel="icon" href="../assets/src/LSPU_Logo.png" type="image/png">
 </head>
 
 <body>
