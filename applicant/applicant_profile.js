@@ -177,10 +177,7 @@ function showToast(msg, type) {
     if (!t) {
         t = document.createElement('div');
         t.id = 'ap-toast';
-        t.style.cssText =
-            'position:fixed;bottom:24px;right:24px;padding:12px 20px;' +
-            'border-radius:10px;color:#fff;font-weight:600;z-index:9999;' +
-            'transition:opacity .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+        // layout & sizing come from the CSS #ap-toast rule
         document.body.appendChild(t);
     }
     t.textContent      = msg;

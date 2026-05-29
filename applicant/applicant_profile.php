@@ -77,7 +77,7 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
                             <p class="section-desc">Please select your preferred campus and admission details.</p>
 
                             <label class="field-label">Preferred Campus <span class="req">*</span></label>
-                            <div class="radio-grid" style="margin-top:10px;">
+                            <div class="radio-grid campus-grid" style="margin-top:10px;">
                                 <label>
                                     <input type="radio" name="campus" value="Sta Cruz Campus" required>
                                     Santa Cruz
