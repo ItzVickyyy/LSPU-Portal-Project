@@ -1,11 +1,18 @@
 <?php
 // ── LSPU Portal — Database Configuration ──
 // Edit these values to match your XAMPP setup.
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');       // XAMPP default
-define('DB_PASS', '');           // XAMPP default (blank)
-define('DB_NAME', 'lspu_portal');
-s
+// -- OLD XAMPP setup (commented out) --
+// define('DB_HOST', 'localhost');
+// define('DB_USER', 'root');       // XAMPP default
+// define('DB_PASS', '');           // XAMPP default (blank)
+// define('DB_NAME', 'lspu_portal');
+
+// -- Railway MySQL setup --
+define('DB_HOST', getenv('MYSQLHOST'));
+define('DB_PORT', getenv('MYSQLPORT'));
+define('DB_USER', getenv('MYSQLUSER'));
+define('DB_PASS', getenv('MYSQLPASSWORD'));
+define('DB_NAME', getenv('MYSQLDATABASE'));
 function db(): mysqli
 {
     static $conn = null;
