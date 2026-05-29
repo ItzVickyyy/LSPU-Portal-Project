@@ -1,18 +1,25 @@
-FROM php:8.2-apache
+FROM ubuntu:22.04
 
-# Fix "More than one MPM loaded" error
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
-          /etc/apache2/mods-enabled/mpm_event.conf \
-          /etc/apache2/mods-enabled/mpm_worker.load \
-          /etc/apache2/mods-enabled/mpm_worker.conf && \
-    a2enmod mpm_prefork rewrite
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Enable mysqli extension
-RUN docker-php-ext-install mysqli
+# Install Apache, PHP, and mysqli
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    php \
+    php-mysqli \
+    libapache2-mod-php \
+    && apt-get clean
 
-# Copy all project files to Apache web root
+# Make sure only mpm_prefork is enabled
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true && \
+    a2enmod mpm_prefork php8.1 rewrite
+
+# Copy project files
 COPY . /var/www/html/
+
+# Remove default Apache page
+RUN rm -f /var/www/html/index.html
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["apachectl", "-D", "FOREGROUND"]
