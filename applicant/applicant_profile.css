@@ -587,7 +587,7 @@ hr {
     .application-wrapper {
         width: 100%;
         margin: 0;
-        padding: 0 0 32px;
+        padding: 0 12px 32px;
     }
 
     /* ── Topbar ── */
@@ -623,8 +623,8 @@ hr {
         align-items: flex-start;
         padding: 16px 16px;
         gap: 14px;
-        border-radius: 0; /* edge-to-edge */
-        margin-bottom: 0;
+        border-radius: var(--radius); /* restored — wrapper now has side padding */
+        margin-bottom: 8px;
     }
 
     .profile-left img {
@@ -649,12 +649,11 @@ hr {
 
     /* ── Accordion ── */
     .accordion-container {
-        margin: 0;
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        box-shadow: none;
-        border-bottom: 1px solid var(--border);
+        margin: 8px 0;
+        border-radius: var(--radius);
+        border-left: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        box-shadow: var(--shadow);
     }
 
     .accordion-header {

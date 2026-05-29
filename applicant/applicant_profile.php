@@ -250,7 +250,7 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Sex <span class="req">*</span></label>
-                                    <div class="radio-grid">
+                                    <div class="radio-grid campus-grid">
                                         <label><input type="radio" name="Sex" value="Male" required> Male</label>
                                         <label><input type="radio" name="Sex" value="Female"> Female</label>
                                     </div>
@@ -277,7 +277,7 @@ $student_name = htmlspecialchars($_SESSION["name"] ?? "Applicant");
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Are you a first-generation incoming college student? <span class="req">*</span></label>
-                                    <div class="radio-grid">
+                                    <div class="radio-grid campus-grid">
                                         <label><input type="radio" name="First_Generation_Student" value="Yes" required> Yes</label>
                                         <label><input type="radio" name="First_Generation_Student" value="No"> No</label>
                                     </div>
