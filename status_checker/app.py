@@ -1,23 +1,31 @@
 """
 app.py — LSPU Applicant Status Checker (Flask)
 Connects to the same MySQL database as the main PHP portal.
-Run: python app.py
-Access on same network: http://<your-ip>:5000
 """
 
 from flask import Flask, render_template, request, jsonify
 import mysql.connector
 from mysql.connector import Error
 import socket
+import os
 
 app = Flask(__name__)
 
-# ── Database config — match your config.php values ──
+# ── Database config — reads from Railway environment variables ──
+# DB_CONFIG = {                  # -- OLD localhost setup (commented out) --
+#     'host':     'localhost',
+#     'user':     'root',
+#     'password': '',
+#     'database': 'lspu_portal',
+#     'charset':  'utf8mb4',
+# }
+
 DB_CONFIG = {
-    'host':     'localhost',
-    'user':     'root',
-    'password': '',
-    'database': 'lspu_portal',
+    'host':     os.getenv('MYSQLHOST'),
+    'port':     int(os.getenv('MYSQLPORT', 3306)),
+    'user':     os.getenv('MYSQLUSER'),
+    'password': os.getenv('MYSQLPASSWORD'),
+    'database': os.getenv('MYSQLDATABASE'),
     'charset':  'utf8mb4',
 }
 
@@ -59,7 +67,6 @@ def get_db():
 
 
 def get_local_ip():
-    """Get the machine's local network IP for QR code generation."""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
@@ -74,7 +81,7 @@ def get_local_ip():
 
 @app.route('/')
 def index():
-    local_ip  = get_local_ip()
+    local_ip   = get_local_ip()
     portal_url = f'http://{local_ip}:5000'
     return render_template('status_checker.html', portal_url=portal_url)
 
@@ -125,7 +132,6 @@ def check_status():
         status_key = row.get('application_status') or 'Draft'
         meta       = STATUS_META.get(status_key, STATUS_META['Draft'])
 
-        # Format updated_at timestamp
         updated_at = row.get('updated_at')
         if updated_at:
             updated_str = updated_at.strftime('%B %d, %Y at %I:%M %p')
@@ -161,4 +167,5 @@ def check_status():
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
