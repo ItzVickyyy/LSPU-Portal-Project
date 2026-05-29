@@ -17,6 +17,9 @@
   <!-- ── TOPBAR ─────────────────────────────────────────────────────────── -->
   <div class="topbar">
     <div class="brand">
+      <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
       <div class="brand-logo"><img src="../assets/src/LSPU_Logo.png" alt="LSPU"
           onerror="this.parentElement.innerHTML='<i class=\'fas fa-university\' style=\'color:var(--blue);font-size:1.1rem\'></i>'" />
       </div>
@@ -26,16 +29,19 @@
       </div>
     </div>
     <div class="top-right">
-      <span class="top-badge"><i class="fa fa-user-shield"></i> &nbsp;<span id="admin-name-display">Admin</span></span>
-      <button class="logout-btn" onclick="handleLogout()"><i class="fa fa-power-off"></i> Logout</button>
+      <span class="top-badge"><i class="fa fa-user-shield"></i> <span class="badge-name">&nbsp;<span id="admin-name-display">Admin</span></span></span>
+      <button class="logout-btn" onclick="handleLogout()"><i class="fa fa-power-off"></i> <span class="logout-label">Logout</span></button>
     </div>
   </div>
 
   <!-- ── MAIN LAYOUT ─────────────────────────────────────────────────────── -->
   <div class="layout">
 
+    <!-- SIDEBAR BACKDROP (mobile) -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
     <!-- SIDEBAR -->
-    <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
       <div class="sidebar-greeting">
         <img src="../assets/src/Greetings.gif" alt="Greetings" class="sidebar-greeting-img" />
       </div>
@@ -2535,5 +2541,27 @@
 
   <!-- ══ Externalized JavaScript ════════════════════════════════════════ -->
   <script src="admin.js"></script>
+  <script>
+    function toggleSidebar() {
+      const s = document.getElementById("sidebar");
+      const b = document.getElementById("sidebar-backdrop");
+      const open = s.classList.toggle("open");
+      b.classList.toggle("open", open);
+      document.body.classList.toggle("sidebar-open", open);
+    }
+    function closeSidebar() {
+      document.getElementById("sidebar").classList.remove("open");
+      document.getElementById("sidebar-backdrop").classList.remove("open");
+      document.body.classList.remove("sidebar-open");
+    }
+    // Close sidebar on nav item click (mobile)
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".nav-item").forEach(function(item) {
+        item.addEventListener("click", function() {
+          if (window.innerWidth <= 900) closeSidebar();
+        });
+      });
+    });
+  </script>
 </body>
 </html>

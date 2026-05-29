@@ -1154,107 +1154,256 @@ code {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
+
+/* ── Hamburger button (hidden on desktop) ─── */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: background .15s;
+}
+.hamburger-btn:hover {
+  background: rgba(255,255,255,.15);
+}
+
+/* Sidebar backdrop (mobile drawer) */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11,31,58,.45);
+  z-index: 149;
+  backdrop-filter: blur(2px);
+}
+.sidebar-backdrop.open {
+  display: block;
+}
+
 @media(max-width:900px) {
+  /* ── Fix 1: Sidebar becomes off-canvas drawer ── */
   .sidebar {
-    width: 54px
+    position: fixed;
+    top: 68px;       /* below topbar */
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index: 150;
+    box-shadow: 4px 0 24px rgba(11,31,58,.18);
+    overflow-y: auto;
   }
-
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  /* Restore full sidebar appearance inside drawer */
+  .sidebar .nav-item span,
+  .sidebar .nav-group-label {
+    display: revert;
+  }
+  .sidebar .nav-item {
+    justify-content: flex-start;
+    padding: 9px 18px;
+  }
+  .sidebar .nav-item i {
+    width: 16px;
+  }
   .sidebar-greeting {
-    padding: 8px 6px 4px;
+    padding: 10px 10px 6px;
   }
-
   .sidebar-greeting-img {
-    height: 34px;
-    border-radius: 6px;
-    object-position: center 25%;
+    height: auto;
+    border-radius: 10px;
+    object-position: center;
   }
 
-  .nav-item span,
-  .nav-group-label {
-    display: none
-  }
-
-  .nav-item {
+  /* Show hamburger */
+  .hamburger-btn {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
-    padding: 11px
   }
 
-  .nav-item i {
-    width: auto
+  /* ── Fix 2: Topbar — compact on mobile ── */
+  .topbar {
+    padding: 0 14px;
+  }
+  .brand-text {
+    font-size: 1rem;
+  }
+  .brand-sub {
+    display: none;
+  }
+  .top-badge {
+    padding: 5px 9px;
+    font-size: .73rem;
+  }
+  .logout-btn {
+    padding: 7px 12px;
+    font-size: .78rem;
   }
 
+  /* ── Fix 6: Main content padding ── */
   .main {
-    padding: 18px
+    padding: 16px;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr
-  }
-
-  /* Applicants toolbar stacks nicely */
-  #sec-applicants .toolbar {
+  /* ── Fix 4: ALL section toolbars stack on mobile ── */
+  .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
-
-  #sec-applicants .toolbar-row2 {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #sec-applicants .toolbar .search-box,
-  #sec-applicants .toolbar .filter-sel,
-  #sec-applicants .toolbar .btn,
-  #sec-applicants .toolbar-row2 .date-filter,
-  #sec-students .toolbar-row2 .date-filter {
+  .toolbar .search-box,
+  .toolbar .filter-sel,
+  .toolbar .btn,
+  .toolbar-row2 .date-filter,
+  .toolbar-row2 .filter-sel {
     width: 100%;
     min-width: unset;
+  }
+  .toolbar-row2 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* ── Fix 3: ALL tables get scrollable wrapper ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-wrap table {
+    min-width: 580px;
+  }
+
+  /* ── Fix 5: Bulk action bar wraps gracefully ── */
+  .bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .bulk-bar .bulk-count {
+    text-align: center;
+  }
+  .bulk-bar .bulk-actions {
+    justify-content: center;
+  }
+
+  /* Form grid single column */
+  .form-grid,
+  .form-grid.col3 {
+    grid-template-columns: 1fr;
   }
 
   /* Applicants table: hide less-critical columns on tablet */
   #appl-tbody td:nth-child(5),
-  /* Campus */
   #sec-applicants thead th:nth-child(5),
   #appl-tbody td:nth-child(6),
-  /* Program */
   #sec-applicants thead th:nth-child(6) {
     display: none;
+  }
+
+  /* ── Fix 7 & 10: iOS zoom prevention — force 16px on all inputs/selects ── */
+  .fg input,
+  .fg select,
+  .fg textarea,
+  .search-box,
+  select.filter-sel,
+  input.date-filter,
+  .status-select {
+    font-size: 16px !important;
   }
 }
 
 @media(max-width:600px) {
-  .stats-row .stat-card {
-    min-width: calc(50% - 7px)
+  /* ── Fix 6: Even tighter padding on small phones ── */
+  .main {
+    padding: 12px;
   }
 
+  /* ── Fix 2: Topbar — hide admin name text on very small screens ── */
+  .top-badge .badge-name {
+    display: none;
+  }
+  .logout-btn .logout-label {
+    display: none;
+  }
+  .logout-btn {
+    padding: 7px 10px;
+  }
+
+  .stats-row .stat-card {
+    min-width: calc(50% - 7px);
+  }
+
+  /* ── Fix 8: Dashboard cards — overflow protection ── */
   .dash-grid {
-    grid-template-columns: 1fr
+    grid-template-columns: 1fr;
+  }
+  .dash-card {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .bar-chart {
+    overflow-x: auto;
+  }
+  .recent-list {
+    overflow-y: auto;
+    max-height: 320px;
   }
 
   .info-row {
-    grid-template-columns: 1fr
+    grid-template-columns: 1fr;
   }
 
-  /* Applicants table: scrollable container */
-  #sec-applicants .table-wrap {
+  /* ── Fix 3: Table overflow (all sections) ── */
+  .table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-
-  #sec-applicants table {
-    min-width: 600px;
+  .table-wrap table {
+    min-width: 560px;
   }
 
-  /* Hide registered date on mobile too */
+  /* Applicants-specific overrides */
   #appl-tbody td:nth-child(8),
   #sec-applicants thead th:nth-child(8) {
     display: none;
   }
-
-  /* Compact action buttons */
   #sec-applicants .action-btns {
     flex-direction: column;
     gap: 4px;
+  }
+
+  /* ── Fix 9: detail-hero inside modals ── */
+  .detail-hero {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .detail-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 1.4rem;
+  }
+  .detail-name {
+    font-size: 1.2rem;
+  }
+  .detail-meta {
+    font-size: .78rem;
+  }
+  .detail-meta span {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 2px;
   }
 
   /* Pagination: tighter on mobile */
@@ -1263,12 +1412,10 @@ code {
     align-items: flex-start;
     gap: 8px;
   }
-
   .pagination-controls {
     flex-wrap: wrap;
   }
 
-  /* Status select: full width on mobile */
   .status-select {
     width: 100%;
   }
