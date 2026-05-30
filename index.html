@@ -45,6 +45,7 @@
       <a href="#campuses">Campuses</a>
       <a href="#why-lspu">Why LSPU</a>
       <a href="portal/portal.html">Portal Login</a>
+      <a href="#" onclick="openStatusChecker(); return false;">Check Status</a>
       <a href="portal/portal.html#page-apply-step1" class="nav-cta">Apply Now</a>
     </div>
     <button class="nav-hamburger" id="hamburger" aria-label="Open menu">
@@ -59,6 +60,7 @@
     <a href="#campuses" onclick="closeMobile()">Campuses</a>
     <a href="#why-lspu" onclick="closeMobile()">Why LSPU</a>
     <a href="portal/portal.html">Portal Login</a>
+    <a href="#" onclick="openStatusChecker(); closeMobile(); return false;">Check Application Status</a>
     <a href="portal/portal.html#page-apply-step1" class="mob-cta">Apply Now →</a>
   </div>
 
@@ -395,6 +397,9 @@
       <a href="portal/portal.html" class="btn-cta-outline">
         <i class="fa fa-right-to-bracket"></i> Student Portal Login
       </a>
+      <a href="#" onclick="openStatusChecker(); return false;" class="btn-cta-ghost">
+        <i class="fa fa-magnifying-glass"></i> Check Application Status
+      </a>
     </div>
   </section>
 
@@ -449,5 +454,11 @@
   </footer>
 
   <script src="index.js"></script>
+  <script>
+    function openStatusChecker() {
+      const url = window.location.protocol + '//' + window.location.hostname + ':5000';
+      window.open(url, '_blank');
+    }
+  </script>
 </body>
 </html>

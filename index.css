@@ -747,6 +747,22 @@
     }
     .btn-cta-outline:hover { border-color: #fff; background: rgba(255,255,255,.08); }
 
+    .btn-cta-ghost {
+      background: transparent;
+      color: rgba(255,255,255,.75);
+      border: 1.5px solid rgba(255,255,255,.22);
+      padding: 12px 24px;
+      border-radius: 9px;
+      font-weight: 500;
+      font-size: .88rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .btn-cta-ghost:hover { border-color: rgba(255,255,255,.55); color: #fff; background: rgba(255,255,255,.06); }
+
     /* ────────────────────────────────────────
        TUITION-FREE BANNER
     ──────────────────────────────────────── */
