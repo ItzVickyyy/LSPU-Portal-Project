@@ -400,3 +400,31 @@ function loadCourses() {
 ══════════════════════════════════════════════════════════ */
 document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+/* ══════════════════════════════════════════════════════════
+   DEV / MANAGEMENT ACCESS MODAL
+══════════════════════════════════════════════════════════ */
+function openDevModal() {
+  document.getElementById('dev-modal-warn').style.display = 'block';
+  document.getElementById('dev-modal-creds').style.display = 'none';
+  document.getElementById('dev-modal-overlay').classList.add('show');
+}
+
+function closeDevModal(e) {
+  if (e && e.target !== document.getElementById('dev-modal-overlay')) return;
+  document.getElementById('dev-modal-overlay').classList.remove('show');
+}
+
+function showDevCredentials() {
+  document.getElementById('dev-modal-warn').style.display = 'none';
+  document.getElementById('dev-modal-creds').style.display = 'block';
+}
+
+function loginAs(email, password) {
+  closeDevModal(null);
+  goTo('page-login');
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-password').value = password;
+  showToast(`Logging in as ${email}…`, 'success');
+  setTimeout(() => doLogin(), 400);
+}

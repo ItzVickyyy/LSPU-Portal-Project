@@ -307,6 +307,46 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════ DEV ACCESS BUTTON ═══════════════════════════ -->
+  <button class="dev-key-btn" id="dev-key-btn" onclick="openDevModal()" aria-label="Management Access">
+    <i class="fa fa-key"></i>
+  </button>
+
+  <!-- ═══════════════════════════ DEV ACCESS MODAL ═══════════════════════════ -->
+  <div class="dev-modal-overlay" id="dev-modal-overlay" onclick="closeDevModal(event)">
+    <div class="dev-modal" id="dev-modal">
+      <button class="dev-modal-close" onclick="closeDevModal(null)" aria-label="Close">✕</button>
+
+      <!-- Warning screen -->
+      <div id="dev-modal-warn">
+        <div class="dev-modal-icon"><i class="fa fa-shield-halved"></i></div>
+        <h3>Management Access</h3>
+        <p>This area is for <strong>authorized personnel only</strong>. The credentials shown are for demo/testing purposes. Unauthorized access is strictly prohibited.</p>
+        <button class="btn btn-primary" style="margin-top:4px;" onclick="showDevCredentials()">I Understand — Proceed</button>
+        <button class="btn btn-outline" style="margin-top:8px;" onclick="closeDevModal(null)">Cancel</button>
+      </div>
+
+      <!-- Credentials screen -->
+      <div id="dev-modal-creds" style="display:none;">
+        <div class="dev-modal-icon" style="color:var(--blue);"><i class="fa fa-user-shield"></i></div>
+        <h3>Select Account</h3>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Click an account to auto-fill and log in.</p>
+
+        <div class="dev-cred-card" onclick="loginAs('registrar@gmail.com','Registrar1234')">
+          <div class="dev-cred-role"><i class="fa fa-id-badge"></i> Registrar</div>
+          <div class="dev-cred-email">registrar@gmail.com</div>
+          <div class="dev-cred-hint">Click to log in</div>
+        </div>
+
+        <div class="dev-cred-card" onclick="loginAs('admin@gmail.com','Admin1234')">
+          <div class="dev-cred-role"><i class="fa fa-user-gear"></i> Admin</div>
+          <div class="dev-cred-email">admin@gmail.com</div>
+          <div class="dev-cred-hint">Click to log in</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
   <div class="toast" id="toast">
     <span class="toast-icon" id="toast-icon">✓</span>
