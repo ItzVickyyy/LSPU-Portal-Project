@@ -424,7 +424,21 @@ function loginAs(email, password) {
   closeDevModal(null);
   goTo('page-login');
   document.getElementById('login-email').value = email;
-  document.getElementById('login-password').value = password;
-  showToast(`Logging in as ${email}…`, 'success');
-  setTimeout(() => doLogin(), 400);
+
+  const pwInput = document.getElementById('login-password');
+  const pwEye = pwInput.closest('.pw-wrap').querySelector('.pw-eye');
+  pwInput.value = password;
+  pwInput.type = 'password';
+  pwEye.disabled = true;
+  pwEye.style.opacity = '0.3';
+  pwEye.style.pointerEvents = 'none';
+
+  showToast('Logging in as ' + email + '\u2026', 'success');
+  setTimeout(() => {
+    doLogin();
+    pwEye.disabled = false;
+    pwEye.style.opacity = '';
+    pwEye.style.pointerEvents = '';
+    pwInput.value = '';
+  }, 400);
 }
