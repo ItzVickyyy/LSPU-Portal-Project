@@ -53,6 +53,5 @@ Admin:
 Email: admin@gmail.com
 Password: Admin1234
 
-Super Admin:
-Email: superadmin@gmail.com
-Password: Superadmin1234
+There is a Super Admin Role and I will not be sharing it.
+But its only function is to create new accounts for management, enable, disable, and change role.

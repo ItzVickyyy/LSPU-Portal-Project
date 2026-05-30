@@ -477,6 +477,14 @@
           <div class="footer-dev-label">Built by</div>
           <div class="footer-dev-name">Vic John O. Salen Jr.</div>
           <div class="footer-dev-subject">Submitted for: Web Systems and Technologies &nbsp;·&nbsp; Integrative Programming Technologies 1 &nbsp;·&nbsp; Multimedia Systems</div>
+          <div class="footer-dev-btns">
+            <button class="dev-note-btn" onclick="openDevNote()">
+              <i class="fa fa-note-sticky"></i> Developer's Note
+            </button>
+            <button class="dev-note-btn dev-note-btn--outline" onclick="openAboutProject()">
+              <i class="fa fa-circle-info"></i> About This Project
+            </button>
+          </div>
         </div>
         <div class="footer-dev-links">
           <a href="mailto:JohnSalen13@gmail.com" class="dev-link" title="Email">
@@ -505,11 +513,151 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════════════ DEVELOPER'S NOTE MODAL ═══════════════════════════ -->
+  <div class="modal-overlay" id="devNoteModal" onclick="closeModal('devNoteModal')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal('devNoteModal')" aria-label="Close"><i class="fa fa-xmark"></i></button>
+      <div class="modal-header">
+        <div class="modal-tag">From the Developer</div>
+        <h2 class="modal-title">Developer's Note</h2>
+        <p class="modal-sub">A quick look at how this project came to be — and everything it became along the way.</p>
+      </div>
+      <div class="modal-body">
+
+        <div class="modal-section">
+          <div class="modal-section-icon"><i class="fa fa-seedling"></i></div>
+          <div class="modal-section-content">
+            <h4>Where It Started</h4>
+            <p>This project began as a final requirement for <strong>Advance Database System</strong>. The task was clear: design a normalized database and build web pages that perform basic CRUD operations connected to it. That scope alone took roughly two weeks of near-sleepless nights to finish properly. Rather than stopping at the minimum, I pushed to build something that felt complete — a real portal with authentication, email verification, role-based access control, an admin dashboard, and a polished interface throughout.</p>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-icon"><i class="fa fa-layer-group"></i></div>
+          <div class="modal-section-content">
+            <h4>Three Subjects, One Project</h4>
+            <p>Midway through development, three other subjects — <strong>Web Systems and Technologies</strong>, <strong>Integrative Programming Technologies 1</strong>, and <strong>Multimedia Systems</strong> — announced they would be merging their individual final project requirements into a single unified submission. The intent was to reduce student workload by consolidating three separate deliverables into one. Since my system already covered the scope of all three naturally, I carried the same project forward as my submission for the merged requirement as well.</p>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-icon"><i class="fa fa-rotate"></i></div>
+          <div class="modal-section-content">
+            <h4>The Requirement That Changed</h4>
+            <p>Shortly after, the <strong>Advance Database System</strong> professor revised the deliverable. The final submission for that subject would only need to be the database schema and an Entity Relationship Diagram — not a working application. So the system I had been building no longer counted toward that subject at all. What started as an ADS project ultimately ended up submitted purely for the three merged subjects.</p>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-icon"><i class="fa fa-flask"></i></div>
+          <div class="modal-section-content">
+            <h4>The Flask Complication</h4>
+            <p>Then the formal instructions for the merged final project arrived — after the system was essentially finished. The instructions specified that the project must use <strong>Flask</strong> as the web framework, with a PC or laptop acting as the host server and a mobile phone on the same network as the client device.</p>
+            <p style="margin-top:10px">The server-host and mobile-client requirements weren't a problem. The system was already designed to run locally on XAMPP, and the front-end was fully responsive from day one. That part was covered.</p>
+            <p style="margin-top:10px">The Flask requirement, however, was a real conflict. The entire back-end had already been written in <strong>PHP</strong>. PHP and Flask are not interchangeable — they are fundamentally different technology stacks, and migrating from one to the other would mean rewriting the entire server-side codebase from scratch. After two to three weeks of development with the system already functioning well, that wasn't something I was willing to redo. The project already achieves every practical goal the instruction was aiming for: a local server hosting a web application accessed from a mobile device over a shared network. The framework used to serve it doesn't change what the system is or what it demonstrates.</p>
+            <p style="margin-top:10px">As a small acknowledgment of the Flask requirement, the <strong>Status Checker</strong> module was built as a standalone Python/Flask application that connects to the same database and allows applicants to look up their application status without logging in. It runs alongside the main portal.</p>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-icon"><i class="fa fa-cloud-arrow-up"></i></div>
+          <div class="modal-section-content">
+            <h4>One More Requirement</h4>
+            <p>And then came one final addition. Deployment became a requirement under <strong>Multimedia Systems</strong> — which is why this site exists online in the first place. What started as a local academic project is now live on the web.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ ABOUT THIS PROJECT MODAL ═══════════════════════════ -->
+  <div class="modal-overlay" id="aboutProjectModal" onclick="closeModal('aboutProjectModal')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal('aboutProjectModal')" aria-label="Close"><i class="fa fa-xmark"></i></button>
+      <div class="modal-header">
+        <div class="modal-tag">Project Overview</div>
+        <h2 class="modal-title">About This Project</h2>
+        <p class="modal-sub">A full-stack student information portal built for Laguna State Polytechnic University — San Pablo City Campus.</p>
+      </div>
+      <div class="modal-body">
+
+        <div class="about-proj-grid">
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-house"></i></div>
+            <h4>Landing Page</h4>
+            <p>A public-facing university landing page with university information, college listings, campus locations, and application entry points. Fully responsive across all devices.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-right-to-bracket"></i></div>
+            <h4>Student Portal</h4>
+            <p>A secure login portal for enrolled students. Students can view their profile, track their application progress, and access university services after authentication.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-file-pen"></i></div>
+            <h4>Application Page</h4>
+            <p>A multi-step online application form for prospective students. Includes personal information, program selection, document submission, and account registration — all in one seamless flow.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-magnifying-glass"></i></div>
+            <h4>Status Checker</h4>
+            <p>A standalone Flask application that lets applicants check their admission status without needing to log in — just enter your reference number and see where you stand.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-user-tie"></i></div>
+            <h4>Registrar Panel</h4>
+            <p>A dedicated dashboard for registrar staff to review incoming applications, update applicant statuses, manage records, and communicate decisions through the system.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-shield-halved"></i></div>
+            <h4>Admin Panel</h4>
+            <p>A full administrative dashboard with user management, system monitoring, and oversight tools. Admins can view activity across the portal and manage all user accounts.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-crown"></i></div>
+            <h4>Super Admin</h4>
+            <p>A privileged role reserved for system-level management: creating new management accounts, assigning roles, and enabling or disabling access across the platform.</p>
+          </div>
+          <div class="about-proj-card">
+            <div class="about-proj-icon"><i class="fa fa-database"></i></div>
+            <h4>Tech Stack</h4>
+            <p>Built with <strong>PHP</strong> and <strong>MySQL</strong> on <strong>XAMPP</strong> for the main portal, with a <strong>Python / Flask</strong> microservice for the Status Checker. The front-end uses plain HTML, CSS, and JavaScript — no frameworks.</p>
+          </div>
+        </div>
+
+        <div class="about-proj-footer">
+          <span><i class="fab fa-github"></i> <a href="https://github.com/ItzVickyyy" target="_blank" rel="noopener">github.com/ItzVickyyy</a></span>
+          <span><i class="fa fa-user"></i> Vic John O. Salen Jr.</span>
+          <span><i class="fa fa-calendar"></i> A.Y. 2024–2025</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script src="index.js"></script>
   <script>
     function openStatusChecker() {
       window.open('https://statuschecker-production.up.railway.app', '_blank');
     }
+    function openDevNote() {
+      document.getElementById('devNoteModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function openAboutProject() {
+      document.getElementById('aboutProjectModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeModal('devNoteModal');
+        closeModal('aboutProjectModal');
+      }
+    });
   </script>
 </body>
 </html>
