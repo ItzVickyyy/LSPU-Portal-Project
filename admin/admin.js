@@ -3740,7 +3740,7 @@ async function confirmLogout() {
     fd.append('action', 'logout');
     await fetch('../api/auth.php', { method: 'POST', body: fd });
   } catch (e) { /* ignore */ }
-  window.location.href = '../index.html';
+  window.location.href = '../portal/portal.html';
 }
 
 // ── SESSION GUARD ─────────────────────────────────────────────────────────
@@ -3749,7 +3749,7 @@ async function confirmLogout() {
     const res = await fetch('admin_check.php');
     const data = await res.json();
     if (!data.ok) {
-      window.location.href = '../index.html';
+      window.location.href = '../portal/portal.html';
       return;
     }
     // Show admin name and role badge in topbar

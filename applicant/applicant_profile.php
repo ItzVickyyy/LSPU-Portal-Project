@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/../api/config.php";
 if (empty($_SESSION["applicant_id"])) {
-    header("Location: ../index.html");
+    header("Location: ../portal/portal.html");
     exit;
 }
 $applicant_id = (int) $_SESSION["applicant_id"];

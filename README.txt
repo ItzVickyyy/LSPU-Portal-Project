@@ -22,12 +22,15 @@ Advance_Database_System_Final/
 │   │   ├── Background.avif
 │   │   ├── Greetings.png
 │   │   ├── LSPU_Logo.png
-│   │   └── No-Data.png
-│   └── index.css
+│   └── └── No-Data.png
 ├── db/
 │   ├── db_archive/
 │   │   └── (Tons of backup file)
 │   └── lspu_portal_v2.67.sql
+├── portal/
+│   ├── portal.css
+│   ├── portal.html
+│   └── portal.js
 ├── status_checker/
 │   ├── static/
 │   │   ├── LSPU_Logo.png
@@ -36,6 +39,7 @@ Advance_Database_System_Final/
 │   │   └── status_checker.html
 │   └── app.py
 ├── Dockerfile
+├── index.css
 ├── index.html
 ├── index.js
 └── README.txt

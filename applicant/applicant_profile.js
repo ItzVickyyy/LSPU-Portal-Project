@@ -381,6 +381,6 @@ if (logoutBtn) {
             method: 'POST',
             body: new URLSearchParams({ action: 'logout' }),
         });
-        window.location.href = '../index.html';
+        window.location.href = '../portal/portal.html';
     });
 }

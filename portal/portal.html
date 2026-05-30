@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LSPU Student Portal</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="portal.css">
+  <link rel="icon" href="../assets/src/LSPU_Logo.png" type="image/png">
+</head>
+
+<body>
+  <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
+  <div class="page active" id="page-login">
+    <div class="card">
+      <div class="brand">
+        <div class="brand-logo">
+          <img src="../assets/src/LSPU_Logo.png" alt="LSPU Logo">
+        </div>
+        <h1>LSPU Portal</h1>
+        <p>Laguna State Polytechnic University</p>
+      </div>
+
+      <div class="alert alert-error" id="login-alert"></div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="yourname@lspu.edu.ph" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="forgot-link">
+        <a href="#" onclick="goTo('page-forgot-modal'); return false;">Forgot Password?</a>
+      </div>
+
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Log In</button>
+
+      <div class="divider">or</div>
+
+      <button class="btn btn-outline" onclick="goTo('page-apply-step1')">Apply Here →</button>
+
+      <div class="link-text" style="margin-top:18px;">
+        <a href="#" onclick="goTo('page-courses'); return false;">View Courses</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ FORGOT PASSWORD MODAL INFO ═══════════════════════════ -->
+  <div class="page" id="page-forgot-modal">
+    <div class="card">
+      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
+      <div class="page-title">
+        <h2>Forgot Password?</h2>
+        <p>Read this before proceeding</p>
+      </div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:16px;">
+        Your <strong>default password</strong> is the same verification code sent to you when you first
+        registered.<br><br>
+        Please check your email and try using that code as your password first.
+      </p>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:20px;">
+        If you no longer have that code, click <strong>Proceed</strong> to request a password reset.
+      </p>
+      <button class="btn btn-primary" onclick="goTo('page-recovery')">Proceed to Recovery</button>
+      <button class="btn btn-outline" onclick="goTo('page-login')">Back to Login</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ RECOVERY PAGE ═══════════════════════════ -->
+  <div class="page" id="page-recovery">
+    <div class="card">
+      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
+      <div class="page-title">
+        <h2>Account Recovery</h2>
+        <p>Enter your registered email address</p>
+      </div>
+
+      <div class="alert alert-error" id="rec-alert"></div>
+      <div class="alert alert-info" id="rec-success" style="display:none"></div>
+
+      <div class="field" id="rec-email-field">
+        <label>Email Address</label>
+        <input type="email" id="rec-email" placeholder="yourname@lspu.edu.ph">
+      </div>
+
+      <button class="btn btn-primary" id="rec-btn" onclick="doRecovery()">Send Reset Code</button>
+
+      <!-- After sending -->
+      <div id="rec-otp-section" style="display:none; margin-top:20px;">
+        <div class="field">
+          <label>Verification Code</label>
+          <div class="otp-row" id="rec-otp-row">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+          </div>
+        </div>
+        <div class="field">
+          <label>New Password</label>
+          <input type="password" id="rec-newpass" placeholder="New password">
+        </div>
+        <div class="field">
+          <label>Confirm Password</label>
+          <input type="password" id="rec-confirmpass" placeholder="Confirm new password">
+        </div>
+        <button class="btn btn-primary" onclick="doResetPassword()">Reset Password</button>
+      </div>
+
+      <div class="link-text"><a href="#" onclick="goTo('page-login'); return false;">Back to Login</a></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ APPLY STEP 1 — EMAIL ═══════════════════════════ -->
+  <div class="page" id="page-apply-step1">
+    <div class="card">
+      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
+      <div class="steps">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+      <div class="page-title">
+        <h2>Create an Account</h2>
+        <p>Step 1 of 3 — Verify your email address</p>
+      </div>
+
+      <div class="alert alert-error" id="s1-alert"></div>
+
+      <div class="field">
+        <label>Email Address <span class="req">*</span></label>
+        <input type="email" id="s1-email" placeholder="e.g. juandelacruz@gmail.com">
+        <div class="hint">Use a valid personal email you have access to.</div>
+      </div>
+
+      <div class="consent">
+        <input type="checkbox" id="s1-consent" checked>
+        <span>I agree to the <a href="#">Data Privacy Consent</a> of LSPU</span>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitApplyEmail()">Send Verification Code</button>
+      <div class="link-text"><a href="#" onclick="goTo('page-login'); return false;">Already have an account? Log in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ APPLY STEP 2 — OTP ═══════════════════════════ -->
+  <div class="page" id="page-apply-step2">
+    <div class="card">
+      <button class="back-btn" onclick="goTo('page-apply-step1')">← Change Email</button>
+      <div class="steps">
+        <div class="step-dot active"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+      <div class="page-title">
+        <h2>Enter Verification Code</h2>
+        <p>Step 2 of 3 — Check your email</p>
+      </div>
+
+      <div class="alert alert-info show" id="s2-info"></div>
+      <div class="alert alert-error" id="s2-alert"></div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="s2-email-display" readonly>
+      </div>
+      <div class="field">
+        <label>6-Digit Code <span class="req">*</span></label>
+        <div class="otp-row" id="otp-row">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+          <input type="text" maxlength="1">
+        </div>
+      </div>
+
+      <div class="resend-row">
+        Resend code in <span id="resend-timer">60</span>s &nbsp;|&nbsp;
+        <a onclick="resendCode()">Resend</a>
+      </div>
+      <p class="hint" style="text-align:center;margin-top:8px;">It may take 3–5 minutes. Also check your spam folder.
+      </p>
+
+      <div style="margin-top:18px;">
+        <button class="btn btn-primary" onclick="verifyOtp()">Verify & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ APPLY STEP 3 — BASIC INFO ═══════════════════════════ -->
+  <div class="page" id="page-apply-step3">
+    <div class="card">
+      <div class="steps">
+        <div class="step-dot active"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot active"></div>
+      </div>
+      <div class="page-title">
+        <h2>Basic Information</h2>
+        <p>Step 3 of 3 — Enter your name and create a password</p>
+      </div>
+
+      <div class="alert alert-error" id="s3-alert"></div>
+
+      <div class="section-header">Full Name</div>
+      <div class="field">
+        <label>First Name <span class="req">*</span></label>
+        <input type="text" id="s3-firstname" placeholder="Juan">
+      </div>
+      <div class="field">
+        <label>Middle Name</label>
+        <input type="text" id="s3-middlename" placeholder="Santos">
+      </div>
+      <div class="field">
+        <label>Last Name <span class="req">*</span></label>
+        <input type="text" id="s3-lastname" placeholder="dela Cruz">
+      </div>
+      <div class="field">
+        <label>Suffix</label>
+        <input type="text" id="s3-suffix" placeholder="Jr., Sr., III…">
+      </div>
+
+      <div class="section-header">Account Password</div>
+      <div class="field">
+        <label>Create Password <span class="req">*</span></label>
+        <input type="password" id="s3-password" placeholder="At least 6 characters">
+      </div>
+      <div class="field">
+        <label>Confirm Password <span class="req">*</span></label>
+        <input type="password" id="s3-confirm" placeholder="Re-enter password">
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="submitBasicInfo()">Submit Basic Information</button>
+      </div>
+      <div class="link-text">
+        <a href="#" onclick="goTo('page-login'); return false;">Cancel — Back to Login</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ SUCCESS PAGE ═══════════════════════════ -->
+  <div class="page" id="page-success">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3.5rem;margin-bottom:12px;">🎉</div>
+      <h2 style="font-family:'DM Serif Display',serif;color:var(--blue);font-size:1.5rem;margin-bottom:10px;">
+        Application Submitted!</h2>
+      <p style="color:var(--muted);font-size:.9rem;line-height:1.7;margin-bottom:22px;">
+        Your applicant profile has been created. Your credentials have been sent to your email.<br><br>
+        You may now log in using your email and the password you set.
+      </p>
+      <button class="btn btn-primary" onclick="goTo('page-login')">Go to Login</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ COURSES PAGE ═══════════════════════════ -->
+  <div class="page" id="page-courses">
+    <div class="card">
+      <button class="back-btn" onclick="goTo('page-login')">← Back</button>
+      <div class="page-title">
+        <h2>Available Programs</h2>
+        <p>Laguna State Polytechnic University</p>
+      </div>
+      <div id="courses-list" style="font-size:.85rem;color:var(--muted);line-height:2;"></div>
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="goTo('page-apply-step1')">Apply Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toast-icon">✓</span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <script src="portal.js"></script>
+</body>
+</html>

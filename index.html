@@ -1,290 +1,471 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LSPU Student Portal</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
+  <title>LSPU — Laguna State Polytechnic University</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/index.css">
   <link rel="icon" href="assets/src/LSPU_Logo.png" type="image/png">
+  <link rel="stylesheet" href="index.css">
 </head>
-
 <body>
-  <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
-  <div class="page active" id="page-login">
-    <div class="card">
-      <div class="brand">
-        <div class="brand-logo">
-          <img src="assets/src/LSPU_Logo.png" alt="LSPU Logo">
+
+  <!-- ═══════════════════════════ ANNOUNCEMENT ═══════════════════════════ -->
+  <div class="announce-strip">
+    <span class="pill">New</span>
+    <div class="marquee-track">
+      <span class="marquee-inner">
+        LSPU ranks #337 in WURI 2026 Global Top 500 Innovative Universities &nbsp;•&nbsp;
+        Free Tuition for all Filipino undergraduates under RA 10931 &nbsp;•&nbsp;
+        Now accepting applications for A.Y. 2025–2026 &nbsp;•&nbsp;
+        LSPU College of Engineering produces 52 new Licensed Electrical Engineers — April 2026 board exam &nbsp;•&nbsp;
+        ISO 9001:2015 Certified Quality Management System &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        LSPU ranks #337 in WURI 2026 Global Top 500 Innovative Universities &nbsp;•&nbsp;
+        Free Tuition for all Filipino undergraduates under RA 10931 &nbsp;•&nbsp;
+        Now accepting applications for A.Y. 2025–2026 &nbsp;•&nbsp;
+        LSPU College of Engineering produces 52 new Licensed Electrical Engineers — April 2026 board exam &nbsp;•&nbsp;
+        ISO 9001:2015 Certified Quality Management System
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ NAV ═══════════════════════════ -->
+  <nav id="navbar">
+    <a href="#" class="nav-brand">
+      <img src="assets/src/LSPU_Logo.png" alt="LSPU Logo">
+      <div class="nav-brand-text">
+        <div class="name">LSPU</div>
+        <div class="tagline">Laguna State Polytechnic University</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#colleges">Colleges</a>
+      <a href="#campuses">Campuses</a>
+      <a href="#why-lspu">Why LSPU</a>
+      <a href="portal/portal.html">Portal Login</a>
+      <a href="portal/portal.html#page-apply-step1" class="nav-cta">Apply Now</a>
+    </div>
+    <button class="nav-hamburger" id="hamburger" aria-label="Open menu">
+      <i class="fa fa-bars"></i>
+    </button>
+  </nav>
+
+  <!-- mobile menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#about"    onclick="closeMobile()">About</a>
+    <a href="#colleges" onclick="closeMobile()">Colleges</a>
+    <a href="#campuses" onclick="closeMobile()">Campuses</a>
+    <a href="#why-lspu" onclick="closeMobile()">Why LSPU</a>
+    <a href="portal/portal.html">Portal Login</a>
+    <a href="portal/portal.html#page-apply-step1" class="mob-cta">Apply Now →</a>
+  </div>
+
+  <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <i class="fa fa-star" style="font-size:.7rem"></i>
+          WURI 2026 — Global Rank #337
         </div>
-        <h1>LSPU Portal</h1>
-        <p>Laguna State Polytechnic University</p>
-      </div>
-
-      <div class="alert alert-error" id="login-alert"></div>
-
-      <div class="field">
-        <label>Email Address</label>
-        <input type="email" id="login-email" placeholder="yourname@lspu.edu.ph" autocomplete="username">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
-      </div>
-
-      <div class="forgot-link">
-        <a href="#" onclick="goTo('page-forgot-modal'); return false;">Forgot Password?</a>
-      </div>
-
-      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Log In</button>
-
-      <div class="divider">or</div>
-
-      <button class="btn btn-outline" onclick="goTo('page-apply-step1')">Apply Here →</button>
-
-      <div class="link-text" style="margin-top:18px;">
-        <a href="#" onclick="goTo('page-courses'); return false;">View Courses</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════ FORGOT PASSWORD MODAL INFO ═══════════════════════════ -->
-  <div class="page" id="page-forgot-modal">
-    <div class="card">
-      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
-      <div class="page-title">
-        <h2>Forgot Password?</h2>
-        <p>Read this before proceeding</p>
-      </div>
-      <p style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:16px;">
-        Your <strong>default password</strong> is the same verification code sent to you when you first
-        registered.<br><br>
-        Please check your email and try using that code as your password first.
-      </p>
-      <p style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:20px;">
-        If you no longer have that code, click <strong>Proceed</strong> to request a password reset.
-      </p>
-      <button class="btn btn-primary" onclick="goTo('page-recovery')">Proceed to Recovery</button>
-      <button class="btn btn-outline" onclick="goTo('page-login')">Back to Login</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════ RECOVERY PAGE ═══════════════════════════ -->
-  <div class="page" id="page-recovery">
-    <div class="card">
-      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
-      <div class="page-title">
-        <h2>Account Recovery</h2>
-        <p>Enter your registered email address</p>
-      </div>
-
-      <div class="alert alert-error" id="rec-alert"></div>
-      <div class="alert alert-info" id="rec-success" style="display:none"></div>
-
-      <div class="field" id="rec-email-field">
-        <label>Email Address</label>
-        <input type="email" id="rec-email" placeholder="yourname@lspu.edu.ph">
-      </div>
-
-      <button class="btn btn-primary" id="rec-btn" onclick="doRecovery()">Send Reset Code</button>
-
-      <!-- After sending -->
-      <div id="rec-otp-section" style="display:none; margin-top:20px;">
-        <div class="field">
-          <label>Verification Code</label>
-          <div class="otp-row" id="rec-otp-row">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
+        <h1 class="hero-title">
+          Shaping <em>Leaders,</em><br>
+          Building <em>Futures</em><br>
+          in Laguna
+        </h1>
+        <p class="hero-sub">
+          Laguna State Polytechnic University is the province's premier polytechnic university — offering world-class programs across 11 colleges, free tuition for all Filipino undergraduates, and a legacy of excellence since 1952.
+        </p>
+        <div class="hero-actions">
+          <a href="portal/portal.html#page-apply-step1" class="btn-hero-primary">
+            <i class="fa fa-pen-to-square"></i> Apply Now
+          </a>
+          <a href="#colleges" class="btn-hero-outline">
+            <i class="fa fa-graduation-cap"></i> Explore Programs
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-num">52+</div>
+            <div class="stat-label">Programs Offered</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">11</div>
+            <div class="stat-label">Academic Colleges</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Main Campuses</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">1952</div>
+            <div class="stat-label">Founded</div>
           </div>
         </div>
-        <div class="field">
-          <label>New Password</label>
-          <input type="password" id="rec-newpass" placeholder="New password">
-        </div>
-        <div class="field">
-          <label>Confirm Password</label>
-          <input type="password" id="rec-confirmpass" placeholder="Confirm new password">
-        </div>
-        <button class="btn btn-primary" onclick="doResetPassword()">Reset Password</button>
       </div>
 
-      <div class="link-text"><a href="#" onclick="goTo('page-login'); return false;">Back to Login</a></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════ APPLY STEP 1 — EMAIL ═══════════════════════════ -->
-  <div class="page" id="page-apply-step1">
-    <div class="card">
-      <button class="back-btn" onclick="goTo('page-login')">← Back to Login</button>
-      <div class="steps">
-        <div class="step-dot active"></div>
-        <div class="step-dot"></div>
-        <div class="step-dot"></div>
-      </div>
-      <div class="page-title">
-        <h2>Create an Account</h2>
-        <p>Step 1 of 3 — Verify your email address</p>
-      </div>
-
-      <div class="alert alert-error" id="s1-alert"></div>
-
-      <div class="field">
-        <label>Email Address <span class="req">*</span></label>
-        <input type="email" id="s1-email" placeholder="e.g. juandelacruz@gmail.com">
-        <div class="hint">Use a valid personal email you have access to.</div>
-      </div>
-
-      <div class="consent">
-        <input type="checkbox" id="s1-consent" checked>
-        <span>I agree to the <a href="#">Data Privacy Consent</a> of LSPU</span>
-      </div>
-
-      <button class="btn btn-primary" onclick="submitApplyEmail()">Send Verification Code</button>
-      <div class="link-text"><a href="#" onclick="goTo('page-login'); return false;">Already have an account? Log in</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════ APPLY STEP 2 — OTP ═══════════════════════════ -->
-  <div class="page" id="page-apply-step2">
-    <div class="card">
-      <button class="back-btn" onclick="goTo('page-apply-step1')">← Change Email</button>
-      <div class="steps">
-        <div class="step-dot active"></div>
-        <div class="step-dot active"></div>
-        <div class="step-dot"></div>
-      </div>
-      <div class="page-title">
-        <h2>Enter Verification Code</h2>
-        <p>Step 2 of 3 — Check your email</p>
-      </div>
-
-      <div class="alert alert-info show" id="s2-info"></div>
-      <div class="alert alert-error" id="s2-alert"></div>
-
-      <div class="field">
-        <label>Email Address</label>
-        <input type="email" id="s2-email-display" readonly>
-      </div>
-      <div class="field">
-        <label>6-Digit Code <span class="req">*</span></label>
-        <div class="otp-row" id="otp-row">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
-          <input type="text" maxlength="1">
+      <!-- hero visual -->
+      <div class="hero-visual">
+        <div class="hero-card-stack">
+          <div class="hero-ring"></div>
+          <div class="hero-ring-2"></div>
+          <div class="hero-logo-center">
+            <img src="assets/src/LSPU_Logo.png" alt="LSPU Seal">
+          </div>
+          <!-- floating info cards -->
+          <div class="float-card fc-1">
+            <i class="fa fa-trophy"></i>
+            <div><strong>WURI 2026</strong><span>Global Rank #337</span></div>
+          </div>
+          <div class="float-card fc-2">
+            <i class="fa fa-circle-check"></i>
+            <div><strong>Free Tuition</strong><span>RA 10931</span></div>
+          </div>
+          <div class="float-card fc-3">
+            <i class="fa fa-certificate"></i>
+            <div><strong>ISO 9001:2015</strong><span>Certified</span></div>
+          </div>
+          <div class="float-card fc-4">
+            <i class="fa fa-users"></i>
+            <div><strong>7,000+</strong><span>Students</span></div>
+          </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="resend-row">
-        Resend code in <span id="resend-timer">60</span>s &nbsp;|&nbsp;
-        <a onclick="resendCode()">Resend</a>
+  <!-- ═══════════════════════════ TUITION FREE ═══════════════════════════ -->
+  <div class="tuition-banner">
+    <i class="fa fa-circle-check"></i>
+    <p><strong>100% Free Tuition</strong> for all Filipino undergraduate students under Republic Act 10931 — Universal Access to Quality Tertiary Education Act. Minimal miscellaneous fees only.</p>
+  </div>
+
+  <!-- ═══════════════════════════ ABOUT ═══════════════════════════ -->
+  <section class="about-section" id="about">
+    <div class="section-inner">
+      <div class="about-grid">
+        <div class="about-img-wrap fade-up">
+          <div class="about-img-bg">
+            <img src="assets/src/LSPU_Logo.png" alt="LSPU Seal" class="about-seal">
+          </div>
+          <div class="about-chip">
+            <span>SUC III</span>
+            Institutionally Accredited<br>by AACCUP
+          </div>
+        </div>
+        <div class="about-text fade-up">
+          <div class="section-label">About the University</div>
+          <h2 class="section-title">A Legacy of Excellence in Laguna</h2>
+          <p>
+            Founded in 1952 in Siniloan, Laguna as a vocational and technical school, Laguna State Polytechnic University has grown into the province's leading state university — the <strong>only institutionally-accredited state university in the CALABARZON region</strong>, as certified by AACCUP.
+          </p>
+          <p>
+            With four main campuses in Santa Cruz, Siniloan, San Pablo City, and Los Baños, LSPU serves the CALABARZON industrial corridor and offers over 52 multidisciplinary undergraduate and graduate programs through 11 academic colleges.
+          </p>
+          <p>
+            LSPU holds ISO 9001:2015 certification and is recognized in international rankings including the Times Higher Education Impact Rankings and the WURI Global Top 500 Innovative Universities.
+          </p>
+          <div class="about-pillars">
+            <span class="pillar-pill">Instruction</span>
+            <span class="pillar-pill">Research</span>
+            <span class="pillar-pill">Extension</span>
+            <span class="pillar-pill">Production</span>
+            <span class="pillar-pill">AACCUP Accredited</span>
+            <span class="pillar-pill">ISO 9001:2015</span>
+          </div>
+        </div>
       </div>
-      <p class="hint" style="text-align:center;margin-top:8px;">It may take 3–5 minutes. Also check your spam folder.
-      </p>
+    </div>
+  </section>
 
-      <div style="margin-top:18px;">
-        <button class="btn btn-primary" onclick="verifyOtp()">Verify & Continue</button>
+  <!-- ═══════════════════════════ STATS BAR ═══════════════════════════ -->
+  <div class="stats-bar">
+    <div class="stats-grid stagger">
+      <div class="stats-item">
+        <div class="stats-num">7,000+</div>
+        <div class="stats-lbl">Enrolled Students</div>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stats-item">
+        <div class="stats-num">52+</div>
+        <div class="stats-lbl">Academic Programs</div>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stats-item">
+        <div class="stats-num">11</div>
+        <div class="stats-lbl">Colleges & Departments</div>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="stats-item">
+        <div class="stats-num">#337</div>
+        <div class="stats-lbl">WURI 2026 Global Rank</div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════ APPLY STEP 3 — BASIC INFO ═══════════════════════════ -->
-  <div class="page" id="page-apply-step3">
-    <div class="card">
-      <div class="steps">
-        <div class="step-dot active"></div>
-        <div class="step-dot active"></div>
-        <div class="step-dot active"></div>
+  <!-- ═══════════════════════════ COLLEGES ═══════════════════════════ -->
+  <section class="colleges-section" id="colleges">
+    <div class="section-inner">
+      <div class="fade-up">
+        <div class="section-label">Academic Programs</div>
+        <h2 class="section-title">Colleges & Programs</h2>
+        <p class="section-sub">LSPU offers a wide array of undergraduate and graduate programs across 11 colleges designed to equip students for the demands of a global, technology-driven society.</p>
       </div>
-      <div class="page-title">
-        <h2>Basic Information</h2>
-        <p>Step 3 of 3 — Enter your name and create a password</p>
+      <div class="colleges-grid stagger">
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-laptop-code"></i></div>
+          <div class="college-abbr">CCS</div>
+          <div class="college-name">College of Computer Studies</div>
+          <div class="college-programs">BS Computer Science · BS Information Technology · BS Computer Engineering · MIT (Graduate)</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-gears"></i></div>
+          <div class="college-abbr">COE</div>
+          <div class="college-name">College of Engineering</div>
+          <div class="college-programs">BS Electrical Engineering · BS Computer Engineering · BS Civil Engineering · Master Electrician</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-chalkboard-user"></i></div>
+          <div class="college-abbr">CTE</div>
+          <div class="college-name">College of Teacher Education</div>
+          <div class="college-programs">BEEd · BSEd (various majors) · Master of Arts in Education · CHED Center of Excellence</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-briefcase"></i></div>
+          <div class="college-abbr">CBAA</div>
+          <div class="college-name">College of Business Administration & Accountancy</div>
+          <div class="college-programs">BS Accountancy · BS Business Administration · Office Administration</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-flask"></i></div>
+          <div class="college-abbr">CAS</div>
+          <div class="college-name">College of Arts and Sciences</div>
+          <div class="college-programs">BS Biology · BS Mathematics · BS Chemistry · AB Communication</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-heart-pulse"></i></div>
+          <div class="college-abbr">CNAH</div>
+          <div class="college-name">College of Nursing and Allied Health</div>
+          <div class="college-programs">BS Nursing · BS Medical Technology · BS Radiologic Technology</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-utensils"></i></div>
+          <div class="college-abbr">CHMT</div>
+          <div class="college-name">College of Hospitality Management & Tourism</div>
+          <div class="college-programs">BS Hotel & Restaurant Management · BS Tourism Management</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-industry"></i></div>
+          <div class="college-abbr">CIT</div>
+          <div class="college-name">College of Industrial Technology</div>
+          <div class="college-programs">Bachelor in Industrial Technology · Automotive · Electronics · Drafting</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-seedling"></i></div>
+          <div class="college-abbr">CA</div>
+          <div class="college-name">College of Agriculture</div>
+          <div class="college-programs">BS Agriculture · BS Agricultural Engineering · BS Agribusiness Management</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-fish"></i></div>
+          <div class="college-abbr">CF</div>
+          <div class="college-name">College of Fisheries</div>
+          <div class="college-programs">BS Fisheries · BS Marine Biology · Graduate Programs in Fisheries</div>
+        </div>
+
+        <div class="college-card">
+          <div class="college-icon"><i class="fa fa-shield-halved"></i></div>
+          <div class="college-abbr">CCJE</div>
+          <div class="college-name">College of Criminal Justice Education</div>
+          <div class="college-programs">BS Criminology · Master of Science in Criminal Justice</div>
+        </div>
+
       </div>
 
-      <div class="alert alert-error" id="s3-alert"></div>
-
-      <div class="section-header">Full Name</div>
-      <div class="field">
-        <label>First Name <span class="req">*</span></label>
-        <input type="text" id="s3-firstname" placeholder="Juan">
-      </div>
-      <div class="field">
-        <label>Middle Name</label>
-        <input type="text" id="s3-middlename" placeholder="Santos">
-      </div>
-      <div class="field">
-        <label>Last Name <span class="req">*</span></label>
-        <input type="text" id="s3-lastname" placeholder="dela Cruz">
-      </div>
-      <div class="field">
-        <label>Suffix</label>
-        <input type="text" id="s3-suffix" placeholder="Jr., Sr., III…">
-      </div>
-
-      <div class="section-header">Account Password</div>
-      <div class="field">
-        <label>Create Password <span class="req">*</span></label>
-        <input type="password" id="s3-password" placeholder="At least 6 characters">
-      </div>
-      <div class="field">
-        <label>Confirm Password <span class="req">*</span></label>
-        <input type="password" id="s3-confirm" placeholder="Re-enter password">
-      </div>
-
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="submitBasicInfo()">Submit Basic Information</button>
-      </div>
-      <div class="link-text">
-        <a href="#" onclick="goTo('page-login'); return false;">Cancel — Back to Login</a>
+      <div class="fade-up" style="text-align:center; margin-top:36px;">
+        <a href="portal/portal.html#page-apply-step1" class="btn-hero-primary" style="display:inline-flex">
+          <i class="fa fa-pen-to-square"></i> Apply to Your Preferred Program
+        </a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ═══════════════════════════ SUCCESS PAGE ═══════════════════════════ -->
-  <div class="page" id="page-success">
-    <div class="card" style="text-align:center;">
-      <div style="font-size:3.5rem;margin-bottom:12px;">🎉</div>
-      <h2 style="font-family:'DM Serif Display',serif;color:var(--blue);font-size:1.5rem;margin-bottom:10px;">
-        Application Submitted!</h2>
-      <p style="color:var(--muted);font-size:.9rem;line-height:1.7;margin-bottom:22px;">
-        Your applicant profile has been created. Your credentials have been sent to your email.<br><br>
-        You may now log in using your email and the password you set.
-      </p>
-      <button class="btn btn-primary" onclick="goTo('page-login')">Go to Login</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════ COURSES PAGE ═══════════════════════════ -->
-  <div class="page" id="page-courses">
-    <div class="card">
-      <button class="back-btn" onclick="goTo('page-login')">← Back</button>
-      <div class="page-title">
-        <h2>Available Programs</h2>
-        <p>Laguna State Polytechnic University</p>
+  <!-- ═══════════════════════════ CAMPUSES ═══════════════════════════ -->
+  <section class="campuses-section" id="campuses">
+    <div class="section-inner">
+      <div class="fade-up">
+        <div class="section-label">Our Campuses</div>
+        <h2 class="section-title">Serving Laguna Province</h2>
+        <p class="section-sub">LSPU has four main campuses and multiple satellite campuses strategically located across the province, serving students from all municipalities of Laguna.</p>
       </div>
-      <div id="courses-list" style="font-size:.85rem;color:var(--muted);line-height:2;"></div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="goTo('page-apply-step1')">Apply Now</button>
+      <div class="campuses-grid stagger">
+
+        <div class="campus-card">
+          <div class="campus-badge"><i class="fa fa-building-columns"></i></div>
+          <div>
+            <div class="campus-name">Santa Cruz Campus</div>
+            <div class="campus-location"><i class="fa fa-location-dot"></i> Santa Cruz, Laguna (Main)</div>
+            <div class="campus-desc">The main campus and administrative center of LSPU. Houses the majority of colleges including Engineering, CTE, CBAA, and CAS. Home to the university's central administration and flagship programs.</div>
+          </div>
+        </div>
+
+        <div class="campus-card">
+          <div class="campus-badge gold-badge"><i class="fa fa-building-columns"></i></div>
+          <div>
+            <div class="campus-name">Siniloan Campus</div>
+            <div class="campus-location"><i class="fa fa-location-dot"></i> Siniloan, Laguna (Host)</div>
+            <div class="campus-desc">The original host campus where LSPU was founded in 1952. Offers programs in Education, Business, Computer Studies, and Agriculture serving northern Laguna communities.</div>
+          </div>
+        </div>
+
+        <div class="campus-card">
+          <div class="campus-badge"><i class="fa fa-building-columns"></i></div>
+          <div>
+            <div class="campus-name">San Pablo City Campus</div>
+            <div class="campus-location"><i class="fa fa-location-dot"></i> San Pablo City, Laguna</div>
+            <div class="campus-desc">Serving the largest city in Laguna. Offers Computer Studies, Engineering, Business, Teacher Education, and Criminal Justice programs. Home to a DOST Advanced Manufacturing Center.</div>
+          </div>
+        </div>
+
+        <div class="campus-card">
+          <div class="campus-badge"><i class="fa fa-building-columns"></i></div>
+          <div>
+            <div class="campus-name">Los Baños Campus</div>
+            <div class="campus-location"><i class="fa fa-location-dot"></i> Los Baños, Laguna</div>
+            <div class="campus-desc">Located in the Special Science and Nature City of the Philippines. Formerly Los Baños School of Fisheries — now offering Fisheries, Computer Studies, Tourism, and Education programs.</div>
+          </div>
+        </div>
+
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ WHY LSPU ═══════════════════════════ -->
+  <section class="why-section" id="why-lspu">
+    <div class="section-inner">
+      <div class="fade-up" style="text-align:center">
+        <div class="section-label">Why Choose LSPU</div>
+        <h2 class="section-title">Your Best Choice in Laguna</h2>
+        <p class="section-sub" style="margin: 0 auto 48px;">From free tuition to world-class accreditation, LSPU provides every Filipino student with the tools to succeed.</p>
+      </div>
+      <div class="why-grid stagger">
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-circle-check"></i></div>
+          <div class="why-title">Free Tuition (RA 10931)</div>
+          <div class="why-desc">All Filipino undergraduate students enjoy fully subsidized tuition under the Universal Access to Quality Tertiary Education Act. Only minimal miscellaneous fees apply.</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-award"></i></div>
+          <div class="why-title">AACCUP Institutionally Accredited</div>
+          <div class="why-desc">The only institutionally-accredited state university in CALABARZON — a mark of comprehensive excellence across all academic and administrative functions.</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-globe"></i></div>
+          <div class="why-title">Globally Recognized</div>
+          <div class="why-desc">Ranked #337 in WURI 2026 Global Top 500 Innovative Universities. Also recognized in the Times Higher Education Impact Rankings and other global bodies.</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-handshake"></i></div>
+          <div class="why-title">Industry Partnerships</div>
+          <div class="why-desc">Strategic partnerships with DOST, DSWD, CALABARZON industries, and international universities in Vietnam and South Korea ensure graduates are job-ready and globally competitive.</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-microscope"></i></div>
+          <div class="why-title">Research-Driven Institution</div>
+          <div class="why-desc">An ISO 9001:2015 certified quality management system drives a culture of research, innovation, and continuous improvement across all campuses and programs.</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-icon"><i class="fa fa-map-pin"></i></div>
+          <div class="why-title">4 Campuses Across Laguna</div>
+          <div class="why-desc">With campuses in Santa Cruz, Siniloan, San Pablo City, and Los Baños, quality LSPU education is accessible to all Laguna residents.</div>
+        </div>
+
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
-  <div class="toast" id="toast">
-    <span class="toast-icon" id="toast-icon">✓</span>
-    <span id="toast-msg"></span>
-  </div>
+  <!-- ═══════════════════════════ CTA ═══════════════════════════ -->
+  <section class="cta-section">
+    <div class="section-label">Start Your Journey</div>
+    <h2 class="section-title">Ready to Apply?</h2>
+    <p class="section-sub">Join thousands of students building their future at LSPU. The application is quick, fully online, and free. Create your account and start today.</p>
+    <div class="cta-actions">
+      <a href="portal/portal.html#page-apply-step1" class="btn-cta-white">
+        <i class="fa fa-pen-to-square"></i> Apply Now — It's Free
+      </a>
+      <a href="portal/portal.html" class="btn-cta-outline">
+        <i class="fa fa-right-to-bracket"></i> Student Portal Login
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <img src="assets/src/LSPU_Logo.png" alt="LSPU Logo">
+          <div class="footer-brand-name">
+            LSPU
+            <small>Laguna State Polytechnic University</small>
+          </div>
+        </div>
+        <p class="footer-desc">Province of Laguna's premier state university. Committed to excellence in instruction, research, extension, and production since 1952.</p>
+        <div class="footer-socials">
+          <a href="https://www.facebook.com/LSPUOfficial/" target="_blank" rel="noopener" class="social-btn" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://lspu.edu.ph" target="_blank" rel="noopener" class="social-btn" aria-label="Website"><i class="fa fa-globe"></i></a>
+          <a href="mailto:info@lspu.edu.ph" class="social-btn" aria-label="Email"><i class="fa fa-envelope"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Colleges</h4>
+        <ul>
+          <li><a href="#colleges">Computer Studies</a></li>
+          <li><a href="#colleges">Engineering</a></li>
+          <li><a href="#colleges">Teacher Education</a></li>
+          <li><a href="#colleges">Business & Accountancy</a></li>
+          <li><a href="#colleges">Arts and Sciences</a></li>
+          <li><a href="#colleges">Nursing & Allied Health</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Campuses</h4>
+        <ul>
+          <li><a href="#campuses">Santa Cruz (Main)</a></li>
+          <li><a href="#campuses">Siniloan (Host)</a></li>
+          <li><a href="#campuses">San Pablo City</a></li>
+          <li><a href="#campuses">Los Baños</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Laguna State Polytechnic University. All rights reserved.</span>
+    </div>
+  </footer>
 
   <script src="index.js"></script>
 </body>

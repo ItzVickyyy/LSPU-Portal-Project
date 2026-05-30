@@ -137,7 +137,7 @@ switch ($action) {
             respond(true, 'Account created successfully!', [
                 'applicant_id' => $applicant_id,
                 'role'         => 'User',
-                'redirect' => 'applicant/applicant_profile.php',
+                'redirect' => '../applicant/applicant_profile.php',
             ]);
         }
 
@@ -170,7 +170,7 @@ switch ($action) {
                 respond(true, 'Login successful.', [
                     'role'       => $role,
                     'name'       => "$first $last",
-                    'redirect' => 'admin/admin.html',
+                    'redirect' => '../admin/admin.html',
                 ]);
             }
 
@@ -202,7 +202,7 @@ switch ($action) {
                 respond(true, 'Login successful.', [
                     'role'     => 'User',
                     'name'     => "$first2 $last2",
-                    'redirect' => 'applicant/applicant_profile.php',
+                    'redirect' => '../applicant/applicant_profile.php',
                 ]);
             }
 
