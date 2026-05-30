@@ -4,6 +4,11 @@
  * auth.php — LSPU Portal Authentication API
  * All responses are JSON.
  * Actions: check_email | send_otp | verify_otp | register | login | logout | reset_request | reset_password
+ *
+ * LOGIN FLOW (unified, role-based):
+ *   1. Check `admins` table first (Super Admin, Admin, Registrar)
+ *   2. If not found, check `applicants` table (User)
+ *   3. Return role + redirect target in response
  */
 require_once __DIR__ . '/config.php';
 
@@ -25,100 +30,21 @@ function h(string $s): string
 
 function storeOtp(string $key, string $otp): void
 {
-    $_SESSION[$key] = ['otp' => $otp, 'expires' => time() + 600];
+    $_SESSION[$key] = ['otp' => $otp, 'expires' => time() + 600]; // 10 min
 }
 function verifyOtp(string $key, string $entered): bool
 {
     if (!isset($_SESSION[$key])) return false;
     $data = $_SESSION[$key];
-    if (time() > $data['expires']) { unset($_SESSION[$key]); return false; }
+    if (time() > $data['expires']) {
+        unset($_SESSION[$key]);
+        return false;
+    }
     return $data['otp'] === $entered;
 }
-function clearOtp(string $key): void { unset($_SESSION[$key]); }
-
-// ---------------------------------------------------------------------------
-// Gmail SMTP Email Sender
-// ---------------------------------------------------------------------------
-function sendGmailEmail(string $toEmail, string $toName, string $subject, string $htmlBody): bool
+function clearOtp(string $key): void
 {
-    $gmailUser = getenv('GMAIL_USER');
-    $gmailPass = getenv('GMAIL_APP_PASSWORD');
-
-    $boundary = md5(time());
-
-    $headers  = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
-    $headers .= "From: LSPU Portal <{$gmailUser}>\r\n";
-    $headers .= "Reply-To: {$gmailUser}\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-
-    $message  = "--{$boundary}\r\n";
-    $message .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
-    $message .= $htmlBody . "\r\n";
-    $message .= "--{$boundary}--";
-
-    // Use SMTP via socket
-    $smtp = fsockopen('tls://smtp.gmail.com', 465, $errno, $errstr, 10);
-    if (!$smtp) return false;
-
-    $read = fgets($smtp, 515);
-
-    fputs($smtp, "EHLO lspu-portal\r\n");
-    $ehlo = '';
-    while ($line = fgets($smtp, 515)) {
-        $ehlo .= $line;
-        if (substr($line, 3, 1) === ' ') break;
-    }
-
-    fputs($smtp, "AUTH LOGIN\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, base64_encode($gmailUser) . "\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, base64_encode($gmailPass) . "\r\n");
-    $authResp = fgets($smtp, 515);
-    if (substr($authResp, 0, 3) !== '235') { fclose($smtp); return false; }
-
-    fputs($smtp, "MAIL FROM:<{$gmailUser}>\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, "RCPT TO:<{$toEmail}>\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, "DATA\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, "To: {$toName} <{$toEmail}>\r\n");
-    fputs($smtp, "Subject: {$subject}\r\n");
-    fputs($smtp, $headers . "\r\n");
-    fputs($smtp, $message . "\r\n.\r\n");
-    fgets($smtp, 515);
-
-    fputs($smtp, "QUIT\r\n");
-    fclose($smtp);
-
-    return true;
-}
-
-function otpEmailHtml(string $otp, string $purpose = 'verification'): string
-{
-    return "
-    <div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9fafb;border-radius:12px;'>
-      <div style='text-align:center;margin-bottom:24px;'>
-        <h2 style='color:#1a3c6e;margin:12px 0 4px;'>LSPU Portal</h2>
-        <p style='color:#6b7280;font-size:13px;margin:0;'>Laguna State Polytechnic University</p>
-      </div>
-      <div style='background:#fff;border-radius:10px;padding:28px;text-align:center;border:1px solid #e5e7eb;'>
-        <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Your <strong>$purpose</strong> code is:</p>
-        <div style='font-size:36px;font-weight:700;letter-spacing:10px;color:#1a3c6e;background:#f0f4ff;padding:16px 24px;border-radius:8px;display:inline-block;'>$otp</div>
-        <p style='color:#6b7280;font-size:13px;margin:20px 0 0;'>This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-      </div>
-      <p style='color:#9ca3af;font-size:12px;text-align:center;margin-top:20px;'>
-        If you did not request this, please ignore this email.<br>
-        &copy; 2026 Laguna State Polytechnic University
-      </p>
-    </div>";
+    unset($_SESSION[$key]);
 }
 
 // ---------------------------------------------------------------------------
@@ -128,6 +54,7 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
 
+    // ── Check if email already registered (applicants only) ──────────────
     case 'check_email': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
@@ -138,6 +65,7 @@ switch ($action) {
             respond(true, 'ok', ['exists' => $stmt->num_rows > 0]);
         }
 
+    // ── Generate & return OTP ────────────────────────────────────────────
     case 'send_otp': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
@@ -145,17 +73,11 @@ switch ($action) {
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             storeOtp('otp_register_' . $email, $otp);
 
-            $sent = sendGmailEmail(
-                $email,
-                $email,
-                'LSPU Portal — Email Verification Code',
-                otpEmailHtml($otp, 'email verification')
-            );
-
-            if (!$sent) respond(false, 'Failed to send verification email. Please try again.');
-            respond(true, 'Verification code sent to your email.');
+            // Dev: returned in response. Prod: send via PHPMailer/SMTP.
+            respond(true, 'OTP generated.', ['dev_otp' => $otp]);
         }
 
+    // ── Verify OTP ───────────────────────────────────────────────────────
     case 'verify_otp': {
             $email = strtolower(h($_POST['email'] ?? ''));
             $otp   = h($_POST['otp'] ?? '');
@@ -166,6 +88,7 @@ switch ($action) {
             respond(false, 'Invalid or expired code. Please request a new one.');
         }
 
+    // ── Register new applicant ───────────────────────────────────────────
     case 'register': {
             $email    = strtolower(h($_POST['email']       ?? ''));
             $first    = h($_POST['first_name']  ?? '');
@@ -181,12 +104,14 @@ switch ($action) {
             if (strlen($password) < 6) respond(false, 'Password must be at least 6 characters.');
             if ($password !== $confirm)  respond(false, 'Passwords do not match.');
 
+            // Block registration if email belongs to an admin/registrar account
             $chk = db()->prepare('SELECT admin_id FROM admins WHERE email = ?');
             $chk->bind_param('s', $email);
             $chk->execute();
             $chk->store_result();
             if ($chk->num_rows > 0) respond(false, 'This email address is not available.');
 
+            // Check duplicate applicant
             $stmt = db()->prepare('SELECT id FROM applicants WHERE Email = ?');
             $stmt->bind_param('s', $email);
             $stmt->execute();
@@ -202,20 +127,7 @@ switch ($action) {
             clearOtp('otp_register_' . $email);
             unset($_SESSION['otp_verified_email']);
 
-            // Welcome email
-            sendGmailEmail(
-                $email,
-                "$first $last",
-                'Welcome to LSPU Portal!',
-                "<div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;'>
-                  <h2 style='color:#1a3c6e;'>Welcome, $first!</h2>
-                  <p>Your LSPU applicant account has been created successfully.</p>
-                  <p><strong>Email:</strong> $email</p>
-                  <p>You may now log in to the portal and complete your application profile.</p>
-                  <p style='color:#6b7280;font-size:12px;margin-top:24px;'>&copy; 2026 Laguna State Polytechnic University</p>
-                </div>"
-            );
-
+            // Auto-login as User
             session_regenerate_id(true);
             $_SESSION['applicant_id'] = $applicant_id;
             $_SESSION['email']        = $email;
@@ -225,19 +137,22 @@ switch ($action) {
             respond(true, 'Account created successfully!', [
                 'applicant_id' => $applicant_id,
                 'role'         => 'User',
-                'redirect'     => '../applicant/applicant_profile.php',
+                'redirect' => '../applicant/applicant_profile.php',
             ]);
         }
 
+    // ── Unified Login (all roles) ────────────────────────────────────────
     case 'login': {
             $email    = strtolower(h($_POST['email']    ?? ''));
             $password = $_POST['password'] ?? '';
 
             if (!$email || !$password) respond(false, 'Please fill in all fields.');
 
+            // --- Check admins table first (Super Admin, Admin, Registrar) ---
             $stmt = db()->prepare(
                 'SELECT admin_id, password_hash, first_name, last_name, role
-                 FROM admins WHERE email = ? AND status = "Active"'
+                 FROM admins
+                 WHERE email = ? AND status = "Active"'
             );
             $stmt->bind_param('s', $email);
             $stmt->execute();
@@ -245,65 +160,82 @@ switch ($action) {
 
             if ($stmt->fetch()) {
                 if (!password_verify($password, $hash)) respond(false, 'Invalid email or password.');
+
                 session_regenerate_id(true);
                 $_SESSION['admin_id']    = $admin_id;
                 $_SESSION['admin_email'] = $email;
                 $_SESSION['admin_name']  = "$first $last";
                 $_SESSION['role']        = $role;
+
                 respond(true, 'Login successful.', [
-                    'role'     => $role,
-                    'name'     => "$first $last",
+                    'role'       => $role,
+                    'name'       => "$first $last",
                     'redirect' => '../admin/admin.html',
                 ]);
             }
+
             $stmt->close();
 
-            $stmt2 = db()->prepare('SELECT id, password_hash, First_Name, Last_Name FROM applicants WHERE Email = ?');
+            // --- Check applicants table (User) ---
+            $stmt2 = db()->prepare(
+                'SELECT id, password_hash, First_Name, Last_Name
+                 FROM applicants
+                 WHERE Email = ?'
+            );
             $stmt2->bind_param('s', $email);
             $stmt2->execute();
             $row2 = $stmt2->get_result()->fetch_assoc();
 
             if ($row2) {
                 if (!password_verify($password, $row2['password_hash'])) respond(false, 'Invalid email or password.');
+
+                $applicant_id = $row2['id'];
+                $first2       = $row2['First_Name'];
+                $last2        = $row2['Last_Name'];
+
                 session_regenerate_id(true);
-                $_SESSION['applicant_id'] = $row2['id'];
+                $_SESSION['applicant_id'] = $applicant_id;
                 $_SESSION['email']        = $email;
-                $_SESSION['name']         = "{$row2['First_Name']} {$row2['Last_Name']}";
+                $_SESSION['name']         = "$first2 $last2";
                 $_SESSION['role']         = 'User';
+
                 respond(true, 'Login successful.', [
                     'role'     => 'User',
-                    'name'     => "{$row2['First_Name']} {$row2['Last_Name']}",
+                    'name'     => "$first2 $last2",
                     'redirect' => '../applicant/applicant_profile.php',
                 ]);
             }
 
+            // Not found in either table
             respond(false, 'Invalid email or password.');
         }
 
+    // ── Logout ───────────────────────────────────────────────────────────
     case 'logout': {
             session_destroy();
             respond(true, 'Logged out.');
         }
 
+    // ── Password reset — step 1: send OTP ────────────────────────────────
     case 'reset_request': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
 
+            // Check applicants first, then admins
             $found = false;
-            $name  = $email;
 
-            $stmt = db()->prepare('SELECT First_Name, Last_Name FROM applicants WHERE Email = ?');
+            $stmt = db()->prepare('SELECT id FROM applicants WHERE Email = ?');
             $stmt->bind_param('s', $email);
             $stmt->execute();
-            $row = $stmt->get_result()->fetch_assoc();
-            if ($row) { $found = true; $name = $row['First_Name'] . ' ' . $row['Last_Name']; }
+            $stmt->store_result();
+            if ($stmt->num_rows > 0) $found = true;
 
             if (!$found) {
-                $stmt2 = db()->prepare('SELECT first_name, last_name FROM admins WHERE email = ?');
+                $stmt2 = db()->prepare('SELECT admin_id FROM admins WHERE email = ?');
                 $stmt2->bind_param('s', $email);
                 $stmt2->execute();
-                $row2 = $stmt2->get_result()->fetch_assoc();
-                if ($row2) { $found = true; $name = $row2['first_name'] . ' ' . $row2['last_name']; }
+                $stmt2->store_result();
+                if ($stmt2->num_rows > 0) $found = true;
             }
 
             if (!$found) respond(false, 'No account found with that email.');
@@ -311,17 +243,11 @@ switch ($action) {
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             storeOtp('otp_reset_' . $email, $otp);
 
-            $sent = sendGmailEmail(
-                $email,
-                $name,
-                'LSPU Portal — Password Reset Code',
-                otpEmailHtml($otp, 'password reset')
-            );
-
-            if (!$sent) respond(false, 'Failed to send reset email. Please try again.');
-            respond(true, 'Reset code sent to your email.');
+            // Dev: return OTP. Prod: email it.
+            respond(true, 'Reset code generated.', ['dev_otp' => $otp]);
         }
 
+    // ── Password reset — step 2: verify OTP & set new password ───────────
     case 'reset_password': {
             $email   = strtolower(h($_POST['email']   ?? ''));
             $otp     = h($_POST['otp']      ?? '');
@@ -332,7 +258,9 @@ switch ($action) {
             if (strlen($newpass) < 6)  respond(false, 'Password must be at least 6 characters.');
             if ($newpass !== $confirm)  respond(false, 'Passwords do not match.');
 
-            $hash    = password_hash($newpass, PASSWORD_BCRYPT);
+            $hash = password_hash($newpass, PASSWORD_BCRYPT);
+
+            // Update whichever table the email belongs to
             $updated = false;
 
             $stmt = db()->prepare('UPDATE applicants SET password_hash = ? WHERE Email = ?');
