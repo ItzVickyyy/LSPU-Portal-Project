@@ -210,7 +210,6 @@ async function doRecovery() {
     if (data.ok) {
       recoveryEmail = email;
       if (data.dev_otp) showOtpToast(data.dev_otp);
-      document.getElementById('rec-success').style.display = 'none';
       document.getElementById('rec-alert').style.display = 'none';
       document.getElementById('rec-otp-section').style.display = 'block';
       document.getElementById('rec-email-field').style.display = 'none';
