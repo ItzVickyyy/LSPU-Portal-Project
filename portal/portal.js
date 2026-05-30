@@ -210,8 +210,7 @@ async function doRecovery() {
     if (data.ok) {
       recoveryEmail = email;
       if (data.dev_otp) showOtpToast(data.dev_otp);
-      showAlert('rec-success', `Reset code sent to ${email}.`);
-      document.getElementById('rec-success').style.display = 'block';
+      document.getElementById('rec-success').style.display = 'none';
       document.getElementById('rec-alert').style.display = 'none';
       document.getElementById('rec-otp-section').style.display = 'block';
       document.getElementById('rec-email-field').style.display = 'none';
@@ -242,6 +241,7 @@ async function doResetPassword() {
   try {
     const data = await api({ action: 'reset_password', email: recoveryEmail, otp, password, confirm });
     if (data.ok) {
+      dismissOtpToast();
       showToast('Password reset successfully!', 'success');
       setTimeout(() => goTo('page-login'), 1200);
     } else {
