@@ -44,14 +44,71 @@ function goTo(id) {
    TOAST
 ══════════════════════════════════════════════════════════ */
 let toastTimer;
-function showToast(msg, type = 'success') {
+function showToast(msg, type = 'success', duration = 4000) {
   const t = document.getElementById('toast');
   const icon = document.getElementById('toast-icon');
   document.getElementById('toast-msg').textContent = msg;
   t.className = 'toast show ' + type;
   icon.textContent = type === 'success' ? '✓' : '✕';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+  toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+/* ══════════════════════════════════════════════════════════
+   OTP DEV TOAST — top-right, 120s countdown
+══════════════════════════════════════════════════════════ */
+let _otpToastEl = null;
+let _otpCountdownInterval = null;
+
+function showOtpToast(code) {
+  // Build element once
+  if (!_otpToastEl) {
+    _otpToastEl = document.createElement('div');
+    _otpToastEl.className = 'toast-otp';
+    _otpToastEl.innerHTML = `
+      <button class="toast-otp-close" onclick="dismissOtpToast()" aria-label="Dismiss">✕</button>
+      <div class="toast-otp-header">🔑 Dev OTP Code</div>
+      <div class="toast-otp-code" id="otp-toast-code"></div>
+      <div class="toast-otp-bar-track"><div class="toast-otp-bar-fill" id="otp-toast-bar"></div></div>
+      <div class="toast-otp-meta">
+        <span>Expires in <span id="otp-toast-countdown">120</span>s</span>
+        <span>Dev only</span>
+      </div>`;
+    document.body.appendChild(_otpToastEl);
+  }
+
+  // Reset
+  clearInterval(_otpCountdownInterval);
+  document.getElementById('otp-toast-code').textContent = code;
+
+  const bar  = document.getElementById('otp-toast-bar');
+  const cntEl = document.getElementById('otp-toast-countdown');
+  const total = 120;
+  let remaining = total;
+
+  bar.style.transition = 'none';
+  bar.style.transform  = 'scaleX(1)';
+
+  // Show
+  _otpToastEl.classList.add('show');
+
+  // Kick off shrink after a frame so the transition fires
+  requestAnimationFrame(() => {
+    bar.style.transition = `transform ${total}s linear`;
+    bar.style.transform  = 'scaleX(0)';
+  });
+
+  cntEl.textContent = remaining;
+  _otpCountdownInterval = setInterval(() => {
+    remaining--;
+    cntEl.textContent = remaining;
+    if (remaining <= 0) dismissOtpToast();
+  }, 1000);
+}
+
+function dismissOtpToast() {
+  if (_otpToastEl) _otpToastEl.classList.remove('show');
+  clearInterval(_otpCountdownInterval);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -155,9 +212,8 @@ async function doRecovery() {
     const data = await api({ action: 'reset_request', email });
     if (data.ok) {
       recoveryEmail = email;
-      // dev_otp shown for XAMPP dev; remove in production
-      const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-      showAlert('rec-success', `Reset code sent to ${email}.${hint}`);
+      if (data.dev_otp) showOtpToast(data.dev_otp);
+      showAlert('rec-success', `Reset code sent to ${email}.`);
       document.getElementById('rec-success').style.display = 'block';
       document.getElementById('rec-alert').style.display = 'none';
       document.getElementById('rec-otp-section').style.display = 'block';
@@ -221,9 +277,8 @@ async function submitApplyEmail() {
     if (data.ok) {
       state.email = email;
       document.getElementById('s2-email-display').value = email;
-      // dev_otp shown for XAMPP dev; remove in production
-      const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-      document.getElementById('s2-info').textContent = `Verification code sent to ${email}.${hint}`;
+      if (data.dev_otp) showOtpToast(data.dev_otp);
+      document.getElementById('s2-info').textContent = `Verification code sent to ${email}.`;
       clearOtpRow('otp-row');
       startResendTimer();
       goTo('page-apply-step2');
@@ -253,8 +308,8 @@ function startResendTimer() {
 async function resendCode() {
   const data = await api({ action: 'send_otp', email: state.email });
   if (data.ok) {
-    const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-    document.getElementById('s2-info').textContent = `New code sent to ${state.email}.${hint}`;
+    if (data.dev_otp) showOtpToast(data.dev_otp);
+    document.getElementById('s2-info').textContent = `New code sent to ${state.email}.`;
     clearOtpRow('otp-row');
     startResendTimer();
     showToast('New code sent!', 'success');

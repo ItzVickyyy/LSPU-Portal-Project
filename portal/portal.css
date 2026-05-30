@@ -515,6 +515,96 @@ input[readonly] {
   flex-shrink: 0;
 }
 
+/* ── OTP DEV TOAST (top-right, 120s) ── */
+.toast-otp {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  right: max(16px, env(safe-area-inset-right, 16px));
+  left: auto;
+  transform: translateY(-12px);
+  width: auto;
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 32px));
+  background: #1a2e1c;
+  color: #fff;
+  padding: 14px 16px 10px;
+  border-radius: 12px;
+  font-size: .88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.32);
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  pointer-events: none;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.toast-otp.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.toast-otp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  opacity: .7;
+}
+
+.toast-otp-code {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: .22em;
+  line-height: 1;
+  color: #7dffb0;
+  font-variant-numeric: tabular-nums;
+}
+
+.toast-otp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .73rem;
+  opacity: .65;
+}
+
+.toast-otp-bar-track {
+  height: 3px;
+  background: rgba(255,255,255,.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.toast-otp-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: #7dffb0;
+  border-radius: 2px;
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+
+.toast-otp-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.5);
+  font-size: .85rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+}
+.toast-otp-close:hover { color: #fff; }
+
 /* ── ALERT BOX ── */
 .alert {
   padding: 11px 13px;
