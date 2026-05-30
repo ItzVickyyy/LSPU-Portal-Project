@@ -535,7 +535,7 @@ input[readonly] {
 
 .alert-info {
   background: #edf7f1;
-  color: #155724;
+  color: var(--blue);
   border: 1px solid #b8dfc7;
 }
 
@@ -852,56 +852,5 @@ input[readonly] {
   *, *::before, *::after {
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
-  }
-}
-
-/* ── High-contrast / dark mode support ── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #101c12;
-    --card: #1a2e1e;
-    --dark: #e8f0ea;
-    --muted: #8fa894;
-    --border: #2e4533;
-    --shadow: 0 4px 24px rgba(0,0,0,.4);
-    --shadow-lg: 0 8px 40px rgba(0,0,0,.45);
-  }
-
-  body::before {
-    background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,94,215,.10) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(201,151,58,.07) 0%, transparent 60%);
-  }
-
-  input[type=text],
-  input[type=email],
-  input[type=password],
-  input[type=date],
-  select,
-  textarea {
-    background: #0f1a12;
-    color: var(--dark);
-  }
-
-  input:focus,
-  select:focus,
-  textarea:focus {
-    background: #162019;
-  }
-
-  input[readonly] {
-    background: #0a1409;
-    color: var(--muted);
-  }
-
-  .alert-error {
-    background: #2a1010;
-    border-color: #6b2020;
-  }
-
-  .alert-info {
-    background: #0f2416;
-    border-color: #1e5c30;
-    color: #7ec99a;
   }
 }
