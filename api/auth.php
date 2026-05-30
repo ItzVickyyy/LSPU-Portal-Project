@@ -25,63 +25,87 @@ function h(string $s): string
 
 function storeOtp(string $key, string $otp): void
 {
-    $_SESSION[$key] = ['otp' => $otp, 'expires' => time() + 600]; // 10 min
+    $_SESSION[$key] = ['otp' => $otp, 'expires' => time() + 600];
 }
 function verifyOtp(string $key, string $entered): bool
 {
     if (!isset($_SESSION[$key])) return false;
     $data = $_SESSION[$key];
-    if (time() > $data['expires']) {
-        unset($_SESSION[$key]);
-        return false;
-    }
+    if (time() > $data['expires']) { unset($_SESSION[$key]); return false; }
     return $data['otp'] === $entered;
 }
-function clearOtp(string $key): void
-{
-    unset($_SESSION[$key]);
-}
+function clearOtp(string $key): void { unset($_SESSION[$key]); }
 
 // ---------------------------------------------------------------------------
-// Brevo Email Sender
+// Gmail SMTP Email Sender
 // ---------------------------------------------------------------------------
-function sendBrevoEmail(string $toEmail, string $toName, string $subject, string $htmlBody): bool
+function sendGmailEmail(string $toEmail, string $toName, string $subject, string $htmlBody): bool
 {
-    $apiKey  = getenv('BREVO_API_KEY');
-    $fromEmail = getenv('MAIL_FROM');
-    $fromName  = 'LSPU Portal';
+    $gmailUser = getenv('GMAIL_USER');
+    $gmailPass = getenv('GMAIL_APP_PASSWORD');
 
-    $payload = json_encode([
-        'sender'     => ['name' => $fromName, 'email' => $fromEmail],
-        'to'         => [['email' => $toEmail, 'name' => $toName]],
-        'subject'    => $subject,
-        'htmlContent' => $htmlBody,
-    ]);
+    $boundary = md5(time());
 
-    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => [
-            'accept: application/json',
-            'api-key: ' . $apiKey,
-            'content-type: application/json',
-        ],
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $headers  = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
+    $headers .= "From: LSPU Portal <{$gmailUser}>\r\n";
+    $headers .= "Reply-To: {$gmailUser}\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
 
-    return $httpCode === 201;
+    $message  = "--{$boundary}\r\n";
+    $message .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+    $message .= $htmlBody . "\r\n";
+    $message .= "--{$boundary}--";
+
+    // Use SMTP via socket
+    $smtp = fsockopen('tls://smtp.gmail.com', 465, $errno, $errstr, 10);
+    if (!$smtp) return false;
+
+    $read = fgets($smtp, 515);
+
+    fputs($smtp, "EHLO lspu-portal\r\n");
+    $ehlo = '';
+    while ($line = fgets($smtp, 515)) {
+        $ehlo .= $line;
+        if (substr($line, 3, 1) === ' ') break;
+    }
+
+    fputs($smtp, "AUTH LOGIN\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, base64_encode($gmailUser) . "\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, base64_encode($gmailPass) . "\r\n");
+    $authResp = fgets($smtp, 515);
+    if (substr($authResp, 0, 3) !== '235') { fclose($smtp); return false; }
+
+    fputs($smtp, "MAIL FROM:<{$gmailUser}>\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, "RCPT TO:<{$toEmail}>\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, "DATA\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, "To: {$toName} <{$toEmail}>\r\n");
+    fputs($smtp, "Subject: {$subject}\r\n");
+    fputs($smtp, $headers . "\r\n");
+    fputs($smtp, $message . "\r\n.\r\n");
+    fgets($smtp, 515);
+
+    fputs($smtp, "QUIT\r\n");
+    fclose($smtp);
+
+    return true;
 }
 
 function otpEmailHtml(string $otp, string $purpose = 'verification'): string
 {
     return "
-    <div style='font-family:DM Sans,Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9fafb;border-radius:12px;'>
+    <div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9fafb;border-radius:12px;'>
       <div style='text-align:center;margin-bottom:24px;'>
-        <img src='https://lspu.edu.ph/wp-content/uploads/2021/03/LSPU-Logo.png' alt='LSPU' style='height:60px;'>
         <h2 style='color:#1a3c6e;margin:12px 0 4px;'>LSPU Portal</h2>
         <p style='color:#6b7280;font-size:13px;margin:0;'>Laguna State Polytechnic University</p>
       </div>
@@ -104,7 +128,6 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
 
-    // ── Check if email already registered ───────────────────────────────
     case 'check_email': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
@@ -115,7 +138,6 @@ switch ($action) {
             respond(true, 'ok', ['exists' => $stmt->num_rows > 0]);
         }
 
-    // ── Generate & send OTP via Brevo ────────────────────────────────────
     case 'send_otp': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
@@ -123,7 +145,7 @@ switch ($action) {
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             storeOtp('otp_register_' . $email, $otp);
 
-            $sent = sendBrevoEmail(
+            $sent = sendGmailEmail(
                 $email,
                 $email,
                 'LSPU Portal — Email Verification Code',
@@ -134,7 +156,6 @@ switch ($action) {
             respond(true, 'Verification code sent to your email.');
         }
 
-    // ── Verify OTP ───────────────────────────────────────────────────────
     case 'verify_otp': {
             $email = strtolower(h($_POST['email'] ?? ''));
             $otp   = h($_POST['otp'] ?? '');
@@ -145,7 +166,6 @@ switch ($action) {
             respond(false, 'Invalid or expired code. Please request a new one.');
         }
 
-    // ── Register new applicant ───────────────────────────────────────────
     case 'register': {
             $email    = strtolower(h($_POST['email']       ?? ''));
             $first    = h($_POST['first_name']  ?? '');
@@ -182,8 +202,8 @@ switch ($action) {
             clearOtp('otp_register_' . $email);
             unset($_SESSION['otp_verified_email']);
 
-            // Send welcome email
-            sendBrevoEmail(
+            // Welcome email
+            sendGmailEmail(
                 $email,
                 "$first $last",
                 'Welcome to LSPU Portal!',
@@ -209,7 +229,6 @@ switch ($action) {
             ]);
         }
 
-    // ── Unified Login ────────────────────────────────────────────────────
     case 'login': {
             $email    = strtolower(h($_POST['email']    ?? ''));
             $password = $_POST['password'] ?? '';
@@ -239,27 +258,21 @@ switch ($action) {
             }
             $stmt->close();
 
-            $stmt2 = db()->prepare(
-                'SELECT id, password_hash, First_Name, Last_Name
-                 FROM applicants WHERE Email = ?'
-            );
+            $stmt2 = db()->prepare('SELECT id, password_hash, First_Name, Last_Name FROM applicants WHERE Email = ?');
             $stmt2->bind_param('s', $email);
             $stmt2->execute();
             $row2 = $stmt2->get_result()->fetch_assoc();
 
             if ($row2) {
                 if (!password_verify($password, $row2['password_hash'])) respond(false, 'Invalid email or password.');
-                $applicant_id = $row2['id'];
-                $first2       = $row2['First_Name'];
-                $last2        = $row2['Last_Name'];
                 session_regenerate_id(true);
-                $_SESSION['applicant_id'] = $applicant_id;
+                $_SESSION['applicant_id'] = $row2['id'];
                 $_SESSION['email']        = $email;
-                $_SESSION['name']         = "$first2 $last2";
+                $_SESSION['name']         = "{$row2['First_Name']} {$row2['Last_Name']}";
                 $_SESSION['role']         = 'User';
                 respond(true, 'Login successful.', [
                     'role'     => 'User',
-                    'name'     => "$first2 $last2",
+                    'name'     => "{$row2['First_Name']} {$row2['Last_Name']}",
                     'redirect' => '../applicant/applicant_profile.php',
                 ]);
             }
@@ -267,13 +280,11 @@ switch ($action) {
             respond(false, 'Invalid email or password.');
         }
 
-    // ── Logout ───────────────────────────────────────────────────────────
     case 'logout': {
             session_destroy();
             respond(true, 'Logged out.');
         }
 
-    // ── Password reset — step 1: send OTP ────────────────────────────────
     case 'reset_request': {
             $email = strtolower(h($_POST['email'] ?? ''));
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(false, 'Invalid email address.');
@@ -285,20 +296,14 @@ switch ($action) {
             $stmt->bind_param('s', $email);
             $stmt->execute();
             $row = $stmt->get_result()->fetch_assoc();
-            if ($row) {
-                $found = true;
-                $name  = $row['First_Name'] . ' ' . $row['Last_Name'];
-            }
+            if ($row) { $found = true; $name = $row['First_Name'] . ' ' . $row['Last_Name']; }
 
             if (!$found) {
                 $stmt2 = db()->prepare('SELECT first_name, last_name FROM admins WHERE email = ?');
                 $stmt2->bind_param('s', $email);
                 $stmt2->execute();
                 $row2 = $stmt2->get_result()->fetch_assoc();
-                if ($row2) {
-                    $found = true;
-                    $name  = $row2['first_name'] . ' ' . $row2['last_name'];
-                }
+                if ($row2) { $found = true; $name = $row2['first_name'] . ' ' . $row2['last_name']; }
             }
 
             if (!$found) respond(false, 'No account found with that email.');
@@ -306,7 +311,7 @@ switch ($action) {
             $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             storeOtp('otp_reset_' . $email, $otp);
 
-            $sent = sendBrevoEmail(
+            $sent = sendGmailEmail(
                 $email,
                 $name,
                 'LSPU Portal — Password Reset Code',
@@ -317,7 +322,6 @@ switch ($action) {
             respond(true, 'Reset code sent to your email.');
         }
 
-    // ── Password reset — step 2: verify OTP & set new password ───────────
     case 'reset_password': {
             $email   = strtolower(h($_POST['email']   ?? ''));
             $otp     = h($_POST['otp']      ?? '');
