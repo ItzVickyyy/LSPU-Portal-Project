@@ -2,15 +2,16 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Apache, PHP, and mysqli
+# Install Apache, PHP, and required extensions
 RUN apt-get update && apt-get install -y \
     apache2 \
     php \
     php-mysqli \
+    php-curl \
     libapache2-mod-php \
     && apt-get clean
 
-# Make sure only mpm_prefork is enabled
+# Enable mpm_prefork and rewrite
 RUN a2dismod mpm_event mpm_worker 2>/dev/null || true && \
     a2enmod mpm_prefork php8.1 rewrite
 
