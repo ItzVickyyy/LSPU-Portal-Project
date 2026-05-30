@@ -98,7 +98,7 @@ body::before {
 }
 
 .brand-text {
-    font-family: 'DM Serif Display', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
     color: var(--blue);
     line-height: 1.1;
@@ -187,7 +187,7 @@ body::before {
 }
 
 .profile-right h1 {
-    font-family: 'DM Serif Display', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 2rem;
     line-height: 1.2;
     margin-bottom: 8px;
@@ -302,7 +302,7 @@ body::before {
    SECTION HEADINGS
 ══════════════════════════════════════════════════ */
 .accordion-content h2 {
-    font-family: 'DM Serif Display', serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 1.2rem;
     color: var(--blue);
     margin-bottom: 4px;
@@ -501,7 +501,7 @@ hr {
 }
 
 .submit-alert h3 {
-    font-family: 'DM Serif Display', serif;
+    font-family: 'Poppins', sans-serif;
     color: var(--dark);
     margin-bottom: 10px;
 }

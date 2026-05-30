@@ -87,7 +87,7 @@ body::before {
   border-radius: 50%;
 }
 .brand h1 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.7rem;
   color: var(--blue);
   line-height: 1.1;
@@ -381,7 +381,7 @@ input::placeholder { color: #a8b5a3; }
   border: 1.5px solid rgba(255,255,255,.28);
 }
 .modal-name {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.25rem;
   line-height: 1.2;
   color: inherit;
@@ -615,7 +615,7 @@ input::placeholder { color: #a8b5a3; }
 .qr-close:hover { background: rgba(0,0,0,.12); color: var(--dark); }
 
 .qr-title {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.2rem;
   color: var(--blue);
   margin-bottom: 4px;

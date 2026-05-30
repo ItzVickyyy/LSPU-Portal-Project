@@ -130,7 +130,7 @@ body {
 }
 
 .brand-text {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.15rem;
   color: #fff;
   line-height: 1
@@ -285,7 +285,7 @@ body {
 }
 
 .page-hdr h1 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.6rem;
   color: var(--dark);
   line-height: 1.1
@@ -620,7 +620,7 @@ tr:hover td {
 }
 
 .modal-hdr h2 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.2rem;
   color: var(--blue)
 }
@@ -782,7 +782,7 @@ tr:hover td {
 }
 
 .detail-name {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.6rem;
   line-height: 1.1
 }
@@ -832,7 +832,7 @@ tr:hover td {
 }
 
 .info-section-title {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 1rem;
   color: var(--blue);
   padding: 14px 14px 10px;
