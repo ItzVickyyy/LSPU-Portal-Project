@@ -515,25 +515,27 @@ input[readonly] {
   flex-shrink: 0;
 }
 
-/* ── OTP DEV TOAST (top-right, 120s) ── */
+/* ── OTP TOAST (top-right, 120s) ── */
 .toast-otp {
   position: fixed;
   top: max(16px, env(safe-area-inset-top, 16px));
   right: max(16px, env(safe-area-inset-right, 16px));
   left: auto;
-  transform: translateY(-12px);
+  transform: translateY(-10px);
   width: auto;
-  min-width: 240px;
-  max-width: min(320px, calc(100vw - 32px));
-  background: #1a2e1c;
-  color: #fff;
-  padding: 14px 16px 10px;
-  border-radius: 12px;
+  min-width: 220px;
+  max-width: min(300px, calc(100vw - 32px));
+  background: var(--card);
+  color: var(--dark);
+  padding: 16px 18px 12px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  font-family: 'DM Sans', sans-serif;
   font-size: .88rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.32);
+  gap: 10px;
+  box-shadow: var(--shadow-lg);
   opacity: 0;
   transition: opacity .3s, transform .3s;
   pointer-events: none;
@@ -550,34 +552,31 @@ input[readonly] {
 .toast-otp-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: .73rem;
+  gap: 6px;
+  font-size: .72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .07em;
-  opacity: .7;
+  letter-spacing: .08em;
+  color: var(--muted);
 }
 
 .toast-otp-code {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
-  letter-spacing: .22em;
+  letter-spacing: .25em;
   line-height: 1;
-  color: #7dffb0;
+  color: var(--blue);
   font-variant-numeric: tabular-nums;
 }
 
 .toast-otp-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-size: .73rem;
-  opacity: .65;
+  color: var(--muted);
 }
 
 .toast-otp-bar-track {
   height: 3px;
-  background: rgba(255,255,255,.15);
+  background: var(--border);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -585,7 +584,7 @@ input[readonly] {
 .toast-otp-bar-fill {
   height: 100%;
   width: 100%;
-  background: #7dffb0;
+  background: var(--blue);
   border-radius: 2px;
   transform-origin: left;
   transition: transform 1s linear;
@@ -593,17 +592,22 @@ input[readonly] {
 
 .toast-otp-close {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 9px;
+  right: 11px;
   background: none;
   border: none;
-  color: rgba(255,255,255,.5);
-  font-size: .85rem;
+  color: var(--muted);
+  font-size: .8rem;
   cursor: pointer;
   line-height: 1;
-  padding: 2px 4px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  transition: color .15s, background .15s;
 }
-.toast-otp-close:hover { color: #fff; }
+.toast-otp-close:hover {
+  color: var(--dark);
+  background: var(--surface);
+}
 
 /* ── ALERT BOX ── */
 .alert {

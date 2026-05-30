@@ -55,7 +55,7 @@ function showToast(msg, type = 'success', duration = 4000) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   OTP DEV TOAST — top-right, 120s countdown
+   OTP TOAST — top-right, 120s countdown
 ══════════════════════════════════════════════════════════ */
 let _otpToastEl = null;
 let _otpCountdownInterval = null;
@@ -67,13 +67,10 @@ function showOtpToast(code) {
     _otpToastEl.className = 'toast-otp';
     _otpToastEl.innerHTML = `
       <button class="toast-otp-close" onclick="dismissOtpToast()" aria-label="Dismiss">✕</button>
-      <div class="toast-otp-header">🔑 Dev OTP Code</div>
+      <div class="toast-otp-header">🔑 OTP Code</div>
       <div class="toast-otp-code" id="otp-toast-code"></div>
       <div class="toast-otp-bar-track"><div class="toast-otp-bar-fill" id="otp-toast-bar"></div></div>
-      <div class="toast-otp-meta">
-        <span>Expires in <span id="otp-toast-countdown">120</span>s</span>
-        <span>Dev only</span>
-      </div>`;
+      <div class="toast-otp-meta">Expires in <span id="otp-toast-countdown">120</span>s</div>`;
     document.body.appendChild(_otpToastEl);
   }
 
