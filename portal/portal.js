@@ -1,4 +1,15 @@
 /* ══════════════════════════════════════════════════════════
+   PASSWORD VISIBILITY TOGGLE
+══════════════════════════════════════════════════════════ */
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  icon.className = isHidden ? 'fa fa-eye-slash' : 'fa fa-eye';
+}
+
+/* ══════════════════════════════════════════════════════════
    PROGRAMS — for the Courses page (display only, no DB needed)
 ══════════════════════════════════════════════════════════ */
 const PROGRAMS = {

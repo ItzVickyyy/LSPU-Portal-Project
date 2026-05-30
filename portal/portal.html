@@ -17,6 +17,9 @@
   <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
   <div class="page active" id="page-login">
     <div class="card">
+      <a href="../index.html" class="back-home-btn">
+        <i class="fa fa-arrow-left"></i> Back to Home
+      </a>
       <div class="brand">
         <div class="brand-logo">
           <img src="../assets/src/LSPU_Logo.png" alt="LSPU Logo">
@@ -33,7 +36,12 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+        <div class="pw-wrap">
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="pw-eye" onclick="togglePw('login-password', this)" aria-label="Toggle password visibility">
+            <i class="fa fa-eye"></i>
+          </button>
+        </div>
       </div>
 
       <div class="forgot-link">
@@ -107,11 +115,21 @@
         </div>
         <div class="field">
           <label>New Password</label>
-          <input type="password" id="rec-newpass" placeholder="New password">
+          <div class="pw-wrap">
+            <input type="password" id="rec-newpass" placeholder="New password">
+            <button type="button" class="pw-eye" onclick="togglePw('rec-newpass', this)" aria-label="Toggle password visibility">
+              <i class="fa fa-eye"></i>
+            </button>
+          </div>
         </div>
         <div class="field">
           <label>Confirm Password</label>
-          <input type="password" id="rec-confirmpass" placeholder="Confirm new password">
+          <div class="pw-wrap">
+            <input type="password" id="rec-confirmpass" placeholder="Confirm new password">
+            <button type="button" class="pw-eye" onclick="togglePw('rec-confirmpass', this)" aria-label="Toggle password visibility">
+              <i class="fa fa-eye"></i>
+            </button>
+          </div>
         </div>
         <button class="btn btn-primary" onclick="doResetPassword()">Reset Password</button>
       </div>
@@ -235,11 +253,21 @@
       <div class="section-header">Account Password</div>
       <div class="field">
         <label>Create Password <span class="req">*</span></label>
-        <input type="password" id="s3-password" placeholder="At least 6 characters">
+        <div class="pw-wrap">
+          <input type="password" id="s3-password" placeholder="At least 6 characters">
+          <button type="button" class="pw-eye" onclick="togglePw('s3-password', this)" aria-label="Toggle password visibility">
+            <i class="fa fa-eye"></i>
+          </button>
+        </div>
       </div>
       <div class="field">
         <label>Confirm Password <span class="req">*</span></label>
-        <input type="password" id="s3-confirm" placeholder="Re-enter password">
+        <div class="pw-wrap">
+          <input type="password" id="s3-confirm" placeholder="Re-enter password">
+          <button type="button" class="pw-eye" onclick="togglePw('s3-confirm', this)" aria-label="Toggle password visibility">
+            <i class="fa fa-eye"></i>
+          </button>
+        </div>
       </div>
 
       <div style="margin-top:20px;">
