@@ -66,7 +66,7 @@
 
             <div class="divider">or</div>
 
-            <a class="btn btn-outline" href="{{ portal_url }}">
+            <a class="btn btn-outline" href="https://lspu-admission-project.up.railway.app/portal/portal.html#page-apply-step1">
                 <i class="fa fa-arrow-left"></i> Back to Portal Login
             </a>
 
@@ -154,12 +154,12 @@
 
             <div class="qr-image-wrap">
                 <img id="qr-img"
-                     src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ portal_url }}&color=0B5ED7"
+                     src="{{ url_for('static', filename='Status_Checker_Link_QR.png') }}"
                      alt="QR Code">
             </div>
 
             <div class="qr-url">
-                <strong>{{ portal_url }}</strong>
+                <strong>https://statuschecker-production.up.railway.app/</strong>
             </div>
 
         </div>

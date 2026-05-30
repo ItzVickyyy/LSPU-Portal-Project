@@ -34,6 +34,7 @@ Advance_Database_System_Final/
 ├── status_checker/
 │   ├── static/
 │   │   ├── LSPU_Logo.png
+│   │   ├── Status_Checker_Link_QR.png
 │   │   └── status_checker.css
 │   ├── templates/
 │   │   └── status_checker.html
