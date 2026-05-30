@@ -155,9 +155,7 @@ async function doRecovery() {
     const data = await api({ action: 'reset_request', email });
     if (data.ok) {
       recoveryEmail = email;
-      // dev_otp shown for XAMPP dev; remove in production
-      const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-      showAlert('rec-success', `Reset code sent to ${email}.${hint}`);
+      showAlert('rec-success', `Reset code sent to ${email}. Please check your inbox (and spam folder).`);
       document.getElementById('rec-success').style.display = 'block';
       document.getElementById('rec-alert').style.display = 'none';
       document.getElementById('rec-otp-section').style.display = 'block';
@@ -221,9 +219,7 @@ async function submitApplyEmail() {
     if (data.ok) {
       state.email = email;
       document.getElementById('s2-email-display').value = email;
-      // dev_otp shown for XAMPP dev; remove in production
-      const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-      document.getElementById('s2-info').textContent = `Verification code sent to ${email}.${hint}`;
+      document.getElementById('s2-info').textContent = `Verification code sent to ${email}. Please check your inbox (and spam folder).`;
       clearOtpRow('otp-row');
       startResendTimer();
       goTo('page-apply-step2');
@@ -253,8 +249,7 @@ function startResendTimer() {
 async function resendCode() {
   const data = await api({ action: 'send_otp', email: state.email });
   if (data.ok) {
-    const hint = data.dev_otp ? ` (Dev code: ${data.dev_otp})` : '';
-    document.getElementById('s2-info').textContent = `New code sent to ${state.email}.${hint}`;
+    document.getElementById('s2-info').textContent = `New code sent to ${state.email}. Please check your inbox.`;
     clearOtpRow('otp-row');
     startResendTimer();
     showToast('New code sent!', 'success');
