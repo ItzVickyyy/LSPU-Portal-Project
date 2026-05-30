@@ -43,3 +43,16 @@ Advance_Database_System_Final/
 ├── index.html
 ├── index.js
 └── README.txt
+
+Accounts for Management:
+Registrar:
+Email: registrar@gmail.com
+Password: Registrar1234
+
+Admin:
+Email: admin@gmail.com
+Password: Admin1234
+
+Super Admin:
+Email: superadmin@gmail.com
+Password: Superadmin1234
