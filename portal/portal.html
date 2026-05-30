@@ -287,5 +287,20 @@
   </div>
 
   <script src="portal.js"></script>
+
+  <!-- ═══════════════════════════ STATUS CHECKER FAB ═══════════════════════════ -->
+  <button class="status-fab" id="status-fab" title="Check Application Status"
+          onclick="openStatusChecker()">
+    <i class="fa fa-magnifying-glass"></i>
+    <span class="status-fab-label">Status</span>
+  </button>
+
+  <script>
+    function openStatusChecker() {
+      /* Status checker runs on the Flask server (port 5000) on the same host */
+      const url = window.location.protocol + '//' + window.location.hostname + ':5000';
+      window.open(url, '_blank');
+    }
+  </script>
 </body>
 </html>
