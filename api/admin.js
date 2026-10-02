@@ -410,6 +410,15 @@ async function referenceResource(supabase, resource, method, body, query, sessio
       if (error) throw error;
       return { data };
     }
+    if (body.action === 'update') {
+      const { data, error } = await supabase.from('programs').update({
+        Program_Code: body.program_code,
+        Program_Name: body.program_name,
+        college_id: body.college_id ? Number(body.college_id) : null
+      }).eq('Program_Code', body.orig_code).select().single();
+      if (error) throw error;
+      return { data };
+    }
     if (body.action === 'delete') {
       const { error } = await supabase.from('programs').delete().eq('Program_Code', body.program_code);
       if (error) throw error;
@@ -428,6 +437,19 @@ async function referenceResource(supabase, resource, method, body, query, sessio
       if (error) throw error;
       return { data };
     }
+    if (body.action === 'update') {
+      const { data: existing, error: findError } = await supabase.from('subjects').select('Subject_Id').eq('Subject_Code', body.orig_code).maybeSingle();
+      if (findError) throw findError;
+      if (!existing) { const e = new Error('Subject not found.'); e.status = 404; throw e; }
+      const { data, error } = await supabase.from('subjects').update({
+        Subject_Code: body.subject_code,
+        Subject_Name: body.subject_name,
+        Credits: Number(body.credits || 0),
+        College_Id: body.college_id ? Number(body.college_id) : null
+      }).eq('Subject_Id', existing.Subject_Id).select().single();
+      if (error) throw error;
+      return { data };
+    }
     if (body.action === 'delete') {
       const { error } = await supabase.from('subjects').delete().eq('Subject_Id', body.subject_id);
       if (error) throw error;
@@ -439,6 +461,24 @@ async function referenceResource(supabase, resource, method, body, query, sessio
     requireRole(session, ADMIN);
     if (body.action === 'create') {
       const { data, error } = await supabase.from('instructors').insert(body).select().single();
+      if (error) throw error;
+      return { data };
+    }
+    if (body.action === 'update') {
+      const subject = body.subject_code ? await supabase.from('subjects').select('Subject_Id').eq('Subject_Code', body.subject_code).maybeSingle() : {data:null,error:null};
+      const campus = body.campus_name ? await supabase.from('campus').select('Campus_Id').eq('Campus_Name', body.campus_name).maybeSingle() : {data:null,error:null};
+      if (subject.error) throw subject.error;
+      if (campus.error) throw campus.error;
+      const { data, error } = await supabase.from('instructors').update({
+        First_Name: body.first_name,
+        Middle_Name: body.middle_name || null,
+        Last_Name: body.last_name,
+        Suffix_Title: body.suffix_title || null,
+        Degree: body.degree || null,
+        Subject_ID: subject.data?.Subject_Id || null,
+        College_ID: body.college_id ? Number(body.college_id) : null,
+        Campus_ID: campus.data?.Campus_Id || null
+      }).eq('Instructor_ID', Number(body.instructor_id)).select().single();
       if (error) throw error;
       return { data };
     }
@@ -489,6 +529,18 @@ async function referenceResource(supabase, resource, method, body, query, sessio
         year_level: body.year_level,
         campus_id: body.campus_id ? Number(body.campus_id) : null
       }).select().single();
+      if (error) throw error;
+      return { data };
+    }
+    if (body.action === 'update') {
+      const campus = body.campus_name ? await supabase.from('campus').select('Campus_Id').eq('Campus_Name', body.campus_name).maybeSingle() : {data:null,error:null};
+      if (campus.error) throw campus.error;
+      const { data, error } = await supabase.from('section').update({
+        section_name: body.section_name,
+        program_code: body.program_code,
+        year_level: body.year_level,
+        campus_id: campus.data?.Campus_Id || null
+      }).eq('section_id', Number(body.section_id)).select().single();
       if (error) throw error;
       return { data };
     }
