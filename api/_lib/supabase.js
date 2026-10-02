@@ -19,4 +19,17 @@ function getSupabaseAdmin() {
   );
 }
 
-module.exports = { getSupabaseAdmin, getEnv };
+function getSupabasePublic() {
+  return createClient(
+    getEnv('SUPABASE_URL'),
+    process.env.SUPABASE_PUBLISHABLE_KEY || getEnv('SUPABASE_ANON_KEY'),
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+}
+
+module.exports = { getSupabaseAdmin, getSupabasePublic, getEnv };
