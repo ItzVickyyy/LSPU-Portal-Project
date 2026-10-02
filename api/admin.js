@@ -25,6 +25,65 @@ async function getMany(supabase, table, query = {}) {
   return data || [];
 }
 
+async function studentResource(supabase, method, body, query) {
+  if (method === 'GET') {
+    const id = query.id ? Number(query.id) : null;
+    if (id) {
+      const { data, error } = await supabase.from('students').select('*, applicants(*), admission_info(*), intended_course(*, programs(Program_Name)), section(section_name), semester(semester_name), family_info(*), educational_background(*)').eq('id', id).maybeSingle();
+      if (error) throw error;
+      if (data?.applicants) delete data.applicants.password_hash;
+      return { data };
+    }
+
+    let q = supabase.from('students').select('id, student_id, Status, Enrollment_Date, year_level, section_id, semester_id, applicant_id, first_name, middle_name, last_name, email, contact_number, campus, program_code, applicants(First_Name, Middle_Name, Last_Name, Email, Contact_Number), admission_info(campus), intended_course(Program_Code, programs(Program_Name)), section(section_name), semester(semester_name)').order('id', { ascending: false });
+    if (query.status) q = q.eq('Status', query.status);
+    if (query.search) q = q.or(`student_id.ilike.%${query.search}%,first_name.ilike.%${query.search}%,last_name.ilike.%${query.search}%,email.ilike.%${query.search}%`);
+    const { data, error } = await q;
+    if (error) throw error;
+
+    let rows = (data || []).map(s => ({
+      ...s,
+      full_name: [s.applicants?.First_Name || s.first_name, s.applicants?.Middle_Name || s.middle_name, s.applicants?.Last_Name || s.last_name].filter(Boolean).join(' '),
+      Email: s.applicants?.Email || s.email,
+      Contact_Number: s.applicants?.Contact_Number || s.contact_number,
+      campus: s.admission_info?.[0]?.campus || s.campus,
+      Program_Code: s.intended_course?.[0]?.Program_Code || s.program_code,
+      Program_Name: s.intended_course?.[0]?.programs?.Program_Name || null,
+      section_name: s.section?.section_name || null,
+      semester_name: s.semester?.semester_name || null
+    }));
+    if (query.campus) rows = rows.filter(r => r.campus === query.campus);
+    if (query.program) rows = rows.filter(r => r.Program_Code === query.program);
+    if (query.section) rows = rows.filter(r => r.section_name === query.section);
+    if (query.year_level) rows = rows.filter(r => r.year_level === query.year_level);
+    if (query.date_from) rows = rows.filter(r => String(r.Enrollment_Date || '').slice(0,10) >= query.date_from);
+    if (query.date_to) rows = rows.filter(r => String(r.Enrollment_Date || '').slice(0,10) <= query.date_to);
+    return { data: rows };
+  }
+
+  if (method === 'POST') {
+    const id = Number(body.student_id);
+    if (!id) return null;
+    if (body.action === 'update_status') {
+      const { error } = await supabase.from('students').update({ Status: body.status }).eq('id', id);
+      if (error) throw error;
+      return { msg: 'Status updated.' };
+    }
+    if (body.action === 'update') {
+      const updates = {};
+      for (const [key, column] of [['section_id','section_id'],['year_level','year_level'],['campus','campus'],['program_code','program_code'],['email','email'],['contact_number','contact_number']]) {
+        if (body[key] !== undefined && body[key] !== '') updates[column] = body[key];
+      }
+      if (!Object.keys(updates).length) return { msg: 'Nothing to update.' };
+      if (updates.section_id) updates.section_id = Number(updates.section_id);
+      const { error } = await supabase.from('students').update(updates).eq('id', id);
+      if (error) throw error;
+      return { msg: 'Student updated.' };
+    }
+  }
+  return null;
+}
+
 async function applicantResource(supabase, method, body, query, session) {
   if (method === 'GET') {
     const id = query.id ? Number(query.id) : null;
@@ -343,6 +402,11 @@ module.exports = async function handler(req, res) {
 
     const result = await referenceResource(supabase, resource, req.method, body, query, session);
     if (result) return send(res, true, 'ok', result);
+
+    if (resource === 'students') {
+      const result = await studentResource(supabase, req.method, body, query);
+      if (result) return send(res, true, result.msg || 'ok', result);
+    }
 
     if (resource === 'applicants') {
       const result = await applicantResource(supabase, req.method, body, query, session);
