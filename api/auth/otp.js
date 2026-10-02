@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok:false, msg:'Method not allowed.' });
 
   try {
-    const action = String(req.body?.action || '');
+    const action = String(req.body?.action || req.body?.purpose || '');
     const email = emailOf(req.body?.email);
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ok:false,msg:'Invalid email.'});
 
