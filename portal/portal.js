@@ -149,7 +149,7 @@ wireOtpRow('otp-row');
 wireOtpRow('rec-otp-row');
 
 /* ══════════════════════════════════════════════════════════
-   API HELPER — posts FormData to auth.php
+   API HELPER — routes authentication actions to Supabase APIs
 ══════════════════════════════════════════════════════════ */
 async function api(fields) {
   const action = fields.action;
@@ -397,7 +397,7 @@ async function submitBasicInfo() {
 
     if (data.ok) {
       showToast('Account created! Redirecting…', 'success');
-      // Session is set server-side by auth.php; go straight to profile
+      // Supabase session token is stored locally; go straight to profile
       setTimeout(() => { window.location.href = '../applicant/applicant_profile.php'; }, 800);
     } else {
       showAlert('s3-alert', data.msg);
