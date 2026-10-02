@@ -420,6 +420,158 @@ async function applicantResource(supabase, method, body, query, session) {
     const id = Number(body.applicant_id || body.student_id);
     if (!id) return null;
 
+    if (body.action === 'create_full') {
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!body.first_name || !body.last_name || !email || !body.program_code) {
+        const e = new Error('First name, last name, email, and intended course are required.');
+        e.status = 400;
+        throw e;
+      }
+
+      const { data: existingApplicant, error: existingApplicantError } = await supabase
+        .from('applicants')
+        .select('id')
+        .eq('Email', email)
+        .maybeSingle();
+      if (existingApplicantError) throw existingApplicantError;
+      if (existingApplicant) {
+        const e = new Error('An applicant with this email already exists.');
+        e.status = 409;
+        throw e;
+      }
+
+      const crypto = require('crypto');
+      const bcrypt = require('bcryptjs');
+      const tempPassword = 'LSPU-' + crypto.randomBytes(6).toString('base64url');
+      const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true
+      });
+      if (authError) throw authError;
+
+      const authUser = authData?.user;
+      if (!authUser?.id) {
+        throw new Error('Authentication account could not be created.');
+      }
+
+      let applicantId = null;
+      try {
+        const { data: applicant, error: applicantError } = await supabase.from('applicants').insert({
+          Email: email,
+          password_hash: passwordHash,
+          application_status: 'Draft',
+          First_Name: body.first_name,
+          Middle_Name: body.middle_name || null,
+          Last_Name: body.last_name,
+          Suffix: body.suffix || null,
+          Birthdate: body.birthdate || null,
+          Birth_Place: body.birth_place || null,
+          Citizenship: body.citizenship || null,
+          Sex: body.sex || null,
+          Civil_Status: body.civil_status || null,
+          Religion: body.religion || null,
+          Disability: body.disability || null,
+          First_Generation_Student: body.first_gen || null,
+          Contact_Number: body.contact_number || null,
+          Landline_Number: body.landline_number || null,
+          House_Number: body.house_number || null,
+          Street: body.street || null,
+          Barangay: body.barangay || null,
+          Municipality: body.municipality || null,
+          Province: body.province || null,
+          Zip_Code: body.zip_code || null
+        }).select('id').single();
+        if (applicantError) throw applicantError;
+        applicantId = applicant.id;
+
+        const { error: admissionError } = await supabase.from('admission_info').insert({
+          applicant_id: applicantId,
+          campus: body.campus,
+          student_type: body.student_type,
+          year_level: body.year_level,
+          admission_type: body.admission_type
+        });
+        if (admissionError) throw admissionError;
+
+        const { error: courseError } = await supabase.from('intended_course').insert({
+          applicant_id: applicantId,
+          Program_Code: body.program_code,
+          Specialization: body.specialization || null
+        });
+        if (courseError) throw courseError;
+
+        const { error: familyError } = await supabase.from('family_info').insert({
+          applicant_id: applicantId,
+          guardian_first_name: body.guardian_first_name || null,
+          guardian_last_name: body.guardian_last_name || null,
+          guardian_contact_number: body.guardian_contact_number || null,
+          guardian_email: body.guardian_email || null,
+          guardian_relationship: body.guardian_relationship || null,
+          guardian_barangay: body.guardian_barangay || null,
+          guardian_municipality: body.guardian_municipality || null,
+          guardian_province: body.guardian_province || null,
+          father_first_name: body.father_first_name || null,
+          father_middle_name: body.father_middle_name || null,
+          father_last_name: body.father_last_name || null,
+          father_age: body.father_age === '' ? null : Number(body.father_age),
+          father_citizenship: body.father_citizenship || null,
+          father_educational_attainment: body.father_educational_attainment || null,
+          father_employment_status: body.father_employment_status || null,
+          father_occupation: body.father_occupation || null,
+          mother_first_name: body.mother_first_name || null,
+          mother_middle_name: body.mother_middle_name || null,
+          mother_last_name: body.mother_last_name || null,
+          mother_age: body.mother_age === '' ? null : Number(body.mother_age),
+          mother_citizenship: body.mother_citizenship || null,
+          mother_educational_attainment: body.mother_educational_attainment || null,
+          mother_employment_status: body.mother_employment_status || null,
+          mother_occupation: body.mother_occupation || null
+        });
+        if (familyError) throw familyError;
+
+        const { error: educationError } = await supabase.from('educational_background').insert({
+          applicant_id: applicantId,
+          elementary_school_name: body.elementary_school_name || null,
+          elementary_school_address: body.elementary_school_address || null,
+          elementary_type: body.elementary_type || null,
+          elementary_year_from: body.elementary_year_from === '' ? null : Number(body.elementary_year_from),
+          elementary_year_to: body.elementary_year_to === '' ? null : Number(body.elementary_year_to),
+          high_school_name: body.high_school_name || null,
+          high_school_address: body.high_school_address || null,
+          high_school_type: body.high_school_type || null,
+          high_school_year_from: body.high_school_year_from === '' ? null : Number(body.high_school_year_from),
+          high_school_year_to: body.high_school_year_to === '' ? null : Number(body.high_school_year_to),
+          senior_high_school_name: body.senior_high_school_name || null,
+          senior_high_school_address: body.senior_high_school_address || null,
+          senior_high_school_type: body.senior_high_school_type || null,
+          senior_high_school_year_from: body.senior_high_school_year_from === '' ? null : Number(body.senior_high_school_year_from),
+          senior_high_school_year_to: body.senior_high_school_year_to === '' ? null : Number(body.senior_high_school_year_to),
+          track_strand: body.track_strand || null
+        });
+        if (educationError) throw educationError;
+
+        const { error: mappingError } = await supabase.from('portal_users').insert({
+          id: authUser.id,
+          account_type: 'applicant',
+          applicant_id: applicantId
+        });
+        if (mappingError) throw mappingError;
+
+        return {
+          msg: 'Applicant created successfully.',
+          id: applicantId,
+          temp_password: tempPassword
+        };
+      } catch (error) {
+        if (applicantId) await supabase.from('applicants').delete().eq('id', applicantId);
+        await supabase.auth.admin.deleteUser(authUser.id);
+        throw error;
+      }
+    }
+
     if (body.action === 'update_full') {
       const applicantId = id;
       const applicant = {
