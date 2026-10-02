@@ -152,9 +152,32 @@ wireOtpRow('rec-otp-row');
    API HELPER — posts FormData to auth.php
 ══════════════════════════════════════════════════════════ */
 async function api(fields) {
-  const fd = new FormData();
-  Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
-  const res = await fetch('../api/auth.php', { method: 'POST', body: fd });
+  const action = fields.action;
+  let endpoint = '../api/auth/otp';
+
+  if (action === 'login') endpoint = '../api/auth/login';
+  else if (action === 'register') endpoint = '../api/auth/register';
+  else if (action === 'verify_otp') endpoint = '../api/auth/verify-otp';
+  else if (action === 'reset_password') endpoint = '../api/auth/reset';
+
+  const payload = { ...fields };
+
+  if (action === 'send_otp') {
+    payload.purpose = 'register';
+    delete payload.action;
+  } else if (action === 'verify_otp') {
+    payload.purpose = 'register';
+    delete payload.action;
+  } else if (action === 'reset_request') {
+    payload.purpose = 'reset';
+    delete payload.action;
+  }
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
   return res.json();
 }
 
