@@ -398,7 +398,7 @@ async function submitBasicInfo() {
     if (data.ok) {
       showToast('Account created! Redirecting…', 'success');
       // Supabase session token is stored locally; go straight to profile
-      setTimeout(() => { window.location.href = '../applicant/applicant_profile.php'; }, 800);
+      setTimeout(() => { window.location.href = '../applicant/applicant_profile.html'; }, 800);
     } else {
       showAlert('s3-alert', data.msg);
     }
