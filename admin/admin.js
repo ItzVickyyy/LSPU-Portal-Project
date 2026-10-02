@@ -1965,7 +1965,7 @@ async function viewSpecializations(programCode, programName) {
   const res = await api('programs', { specializations: 1, program_code: programCode });
   const specs = res.data || [];
   document.getElementById('spec-modal-body').innerHTML = specs.length
-    ? `<ul style="padding-left:18px;line-height:2">${specs.map(s => `<li>${s.Specialization || s.specialization || s}</li>`).join('')}</ul>`
+    ? `<ul style="padding-left:18px;line-height:2">${specs.map(s => `<li>${s.spec_name || s.Specialization || s.specialization || s}</li>`).join('')}</ul>`
     + `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
         <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Add Specialization</p>
         <div style="display:flex;gap:8px">
