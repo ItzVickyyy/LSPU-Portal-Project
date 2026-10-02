@@ -25,6 +25,56 @@ async function getMany(supabase, table, query = {}) {
   return data || [];
 }
 
+async function academicResource(supabase, resource, method, body, query) {
+  if (resource === 'enrollment' && method === 'GET') {
+    let q = supabase.from('enrollment').select('enrollment_id, status, enrollment_date, student_id, students(student_id, applicants(First_Name, Last_Name), intended_course(Program_Code, programs(Program_Name))), section(section_name), semester(semester_name), year(academic_year)').order('enrollment_date', {ascending:false});
+    if (query.student_id) q = q.eq('student_id', Number(query.student_id));
+    const {data,error}=await q; if(error)throw error;
+    return {data:(data||[]).map(e=>({...e, student_id:e.students?.student_id, student_name:[e.students?.applicants?.First_Name,e.students?.applicants?.Last_Name].filter(Boolean).join(' '), Program_Code:e.students?.intended_course?.[0]?.Program_Code||null, Program_Name:e.students?.intended_course?.[0]?.programs?.Program_Name||null, section_name:e.section?.section_name||null, semester_name:e.semester?.semester_name||null, academic_year:e.year?.academic_year||null}))};
+  }
+  if(resource==='grades'){
+    if(method==='GET'){
+      if(query.student_id){
+        const {data,error}=await supabase.from('grades').select('grade_id, class_engagement, learning_outputs, quizzes, midterm, final, total, final_grade, remarks, enrolled_subjects(subjects(Subject_Code,Subject_Name,Credits), instructors(First_Name,Last_Name), enrollment(student_id))').eq('enrolled_subjects.enrollment.student_id',Number(query.student_id));
+        if(error)throw error; return {data:data||[]};
+      }
+      const {data,error}=await supabase.from('grades').select('grade_id, enrolled_subjects(enrollment(student_id, students(student_id, applicants(First_Name,Middle_Name,Last_Name,Email)), semester(semester_name)), subjects(Subject_Code))');
+      if(error)throw error;
+      const seen=new Set(), rows=[];
+      for(const g of data||[]){const s=g.enrolled_subjects?.enrollment?.students;if(!s||seen.has(s.student_id))continue;seen.add(s.student_id);rows.push({id:g.enrolled_subjects.enrollment.student_id,student_id:s.student_id,student_name:[s.applicants?.First_Name,s.applicants?.Middle_Name,s.applicants?.Last_Name].filter(Boolean).join(' '),Email:s.applicants?.Email,Program_Code:null,semester_name:g.enrolled_subjects.enrollment.semester?.semester_name||null});}
+      return {data:rows};
+    }
+    if(method==='POST'&&body.action==='update'){
+      const id=Number(body.grade_id);
+      const vals=['class_engagement','learning_outputs','quizzes','midterm','final'].map(k=>Number(body[k]||0));
+      const total=Math.round(vals.reduce((a,b)=>a+b,0)*0.2*100)/100;
+      const avg=vals.reduce((a,b)=>a+b,0)/5;
+      const final_grade=avg>=99?'1.00':avg>=96?'1.25':avg>=93?'1.50':avg>=90?'1.75':avg>=87?'2.00':avg>=84?'2.25':avg>=81?'2.50':avg>=78?'2.75':avg>=75?'3.00':avg>=70?'4.0':'5.0';
+      const remarks=total>=75?'Passed':total>=70?'Conditional Failure':'Failed';
+      const {error}=await supabase.from('grades').update({class_engagement:vals[0],learning_outputs:vals[1],quizzes:vals[2],midterm:vals[3],final:vals[4],total,final_grade,remarks}).eq('grade_id',id);
+      if(error)throw error; return {msg:'Grade updated.'};
+    }
+  }
+  if(resource==='payments'){
+    if(method==='GET'){
+      let q=supabase.from('payment').select('payment_id, amount, payment_date, payment_method, status, student_id, students(student_id, applicants(First_Name,Last_Name)), semester(semester_name), year(academic_year), receipt(receipt_number)').order('payment_date',{ascending:false});
+      if(query.student_id)q=q.eq('student_id',Number(query.student_id));
+      if(query.status)q=q.eq('status',query.status);
+      const {data,error}=await q;if(error)throw error;
+      let rows=(data||[]).map(p=>({...p,student_id:p.students?.student_id,student_name:[p.students?.applicants?.First_Name,p.students?.applicants?.Last_Name].filter(Boolean).join(' '),semester_name:p.semester?.semester_name||null,academic_year:p.year?.academic_year||null,receipt_number:p.receipt?.receipt_number||null}));
+      if(query.search)rows=rows.filter(p=>[p.student_name,p.student_id,p.receipt_number].some(v=>String(v||'').toLowerCase().includes(query.search.toLowerCase())));
+      return {data:rows};
+    }
+    if(method==='POST'&&body.action==='update_status'){const {error}=await supabase.from('payment').update({status:body.status}).eq('payment_id',Number(body.payment_id));if(error)throw error;return {msg:'Payment status updated.'};}
+  }
+  if(resource==='schedule'&&method==='GET'){
+    const {data,error}=await supabase.from('schedule').select('schedule_id, day, time_start, time_end, room, subjects(Subject_Code,Subject_Name), instructors(First_Name,Last_Name), section(section_name), semester(semester_name), year(academic_year)').order('day').order('time_start');
+    if(error)throw error;
+    return {data:(data||[]).map(s=>({...s,Subject_Code:s.subjects?.Subject_Code,Subject_Name:s.subjects?.Subject_Name,instructor_name:[s.instructors?.First_Name,s.instructors?.Last_Name].filter(Boolean).join(' '),section_name:s.section?.section_name,semester_name:s.semester?.semester_name,academic_year:s.year?.academic_year}))};
+  }
+  return null;
+}
+
 async function adminResource(supabase, method, body, session) {
   requireRole(session, ['Super Admin']);
 
@@ -506,6 +556,11 @@ module.exports = async function handler(req, res) {
 
     const result = await referenceResource(supabase, resource, req.method, body, query, session);
     if (result) return send(res, true, 'ok', result);
+
+    if (['enrollment','grades','payments','schedule'].includes(resource)) {
+      const result = await academicResource(supabase, resource, req.method, body, query);
+      if (result) return send(res, true, result.msg || 'ok', result);
+    }
 
     if (resource === 'admins') {
       const result = await adminResource(supabase, req.method, body, session);
