@@ -219,7 +219,7 @@ function showToast(msg, type) {
     toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
 }
 
-document.querySelectorAll('form[action="save_profile.php"]').forEach(function (form) {
+document.querySelectorAll('form[action="../api/applicant/profile"]').forEach(function (form) {
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         const fd  = new FormData(form);
