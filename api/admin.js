@@ -472,7 +472,8 @@ async function referenceResource(supabase, resource, method, body, query, sessio
     if (body.action === 'add_specialization') {
       const { data, error } = await supabase.from('specializations').insert({
         Program_Code: body.program_code,
-        specialization: body.specialization
+        spec_code: body.spec_code || body.specialization,
+        spec_name: body.spec_name || body.specialization
       }).select().single();
       if (error) throw error;
       return { data };
