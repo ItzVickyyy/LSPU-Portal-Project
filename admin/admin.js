@@ -248,7 +248,36 @@ async function initCampusDropdowns() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function ensureAdminSession() {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.replace('../portal/portal.html');
+    return false;
+  }
+
+  try {
+    const res = await fetch('../api/auth/session', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!data.ok || data.account_type !== 'admin') {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem('lspu_refresh_token');
+      window.location.replace('../portal/portal.html');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Admin session check failed:', error);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('lspu_refresh_token');
+    window.location.replace('../portal/portal.html');
+    return false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await ensureAdminSession())) return;
   // Wire nav items
   document.querySelectorAll('.nav-item[data-section]').forEach(el => {
     el.addEventListener('click', () => showSection(el.dataset.section));
