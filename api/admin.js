@@ -4,6 +4,8 @@ const { getSupabaseAdmin } = require('./_lib/supabase');
 const STAFF = ['Super Admin', 'Admin', 'Registrar'];
 const ADMIN = ['Super Admin', 'Admin'];
 
+function first(value) { return Array.isArray(value) ? (value[0] || null) : value; }
+
 function send(res, ok, msg, extra = {}, status = ok ? 200 : 400) {
   return res.status(status).json({ ok, msg, ...extra });
 }
@@ -61,7 +63,7 @@ async function academicResource(supabase, resource, method, body, query) {
       if(query.student_id)q=q.eq('student_id',Number(query.student_id));
       if(query.status)q=q.eq('status',query.status);
       const {data,error}=await q;if(error)throw error;
-      let rows=(data||[]).map(p=>({...p,student_id:p.students?.student_id,student_name:[p.students?.applicants?.First_Name,p.students?.applicants?.Last_Name].filter(Boolean).join(' '),semester_name:p.semester?.semester_name||null,academic_year:p.year?.academic_year||null,receipt_number:p.receipt?.receipt_number||null}));
+      let rows=(data||[]).map(p=>({...p,student_id:p.students?.student_id,student_name:[first(p.students)?.applicants?.First_Name,p.students?.applicants?.Last_Name].filter(Boolean).join(' '),semester_name:p.semester?.semester_name||null,academic_year:p.year?.academic_year||null,receipt_number:p.receipt?.receipt_number||null}));
       if(query.search)rows=rows.filter(p=>[p.student_name,p.student_id,p.receipt_number].some(v=>String(v||'').toLowerCase().includes(query.search.toLowerCase())));
       return {data:rows};
     }
@@ -200,9 +202,9 @@ async function studentResource(supabase, method, body, query) {
       full_name: [s.applicants?.First_Name || s.first_name, s.applicants?.Middle_Name || s.middle_name, s.applicants?.Last_Name || s.last_name].filter(Boolean).join(' '),
       Email: s.applicants?.Email || s.email,
       Contact_Number: s.applicants?.Contact_Number || s.contact_number,
-      campus: s.admission_info?.[0]?.campus || s.campus,
-      Program_Code: s.intended_course?.[0]?.Program_Code || s.program_code,
-      Program_Name: s.intended_course?.[0]?.programs?.Program_Name || null,
+      campus: first(s.admission_info)?.campus || s.campus,
+      Program_Code: first(s.intended_course)?.Program_Code || s.program_code,
+      Program_Name: first(s.intended_course)?.programs?.Program_Name || null,
       section_name: s.section?.section_name || null,
       semester_name: s.semester?.semester_name || null
     }));
@@ -293,10 +295,10 @@ async function applicantResource(supabase, method, body, query, session) {
       Contact_Number: a.Contact_Number,
       Sex: a.Sex,
       created_at: a.created_at,
-      campus: a.admission_info?.[0]?.campus || null,
-      year_level: a.admission_info?.[0]?.year_level || null,
-      Program_Code: a.intended_course?.[0]?.Program_Code || null,
-      Program_Name: a.intended_course?.[0]?.programs?.Program_Name || null
+      campus: first(a.admission_info)?.campus || null,
+      year_level: first(a.admission_info)?.year_level || null,
+      Program_Code: first(a.intended_course)?.Program_Code || null,
+      Program_Name: first(a.intended_course)?.programs?.Program_Name || null
     }));
 
     if (query.campus) rows = rows.filter(r => r.campus === query.campus);
