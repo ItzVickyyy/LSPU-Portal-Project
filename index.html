@@ -45,7 +45,7 @@
       <a href="#campuses">Campuses</a>
       <a href="#why-lspu">Why LSPU</a>
       <a href="portal/portal.html">Portal Login</a>
-      <a href="#" onclick="openStatusChecker(); return false;">Check Status</a>
+      <a href="portal/portal.html">Check Status</a>
       <a href="portal/portal.html#page-apply-step1" class="nav-cta">Apply Now</a>
     </div>
     <button class="nav-hamburger" id="hamburger" aria-label="Open menu">
@@ -60,7 +60,7 @@
     <a href="#campuses" onclick="closeMobile()">Campuses</a>
     <a href="#why-lspu" onclick="closeMobile()">Why LSPU</a>
     <a href="portal/portal.html">Portal Login</a>
-    <a href="#" onclick="openStatusChecker(); closeMobile(); return false;">Check Application Status</a>
+    <a href="portal/portal.html">Check Application Status</a>
     <a href="portal/portal.html#page-apply-step1" class="mob-cta">Apply Now →</a>
   </div>
 
@@ -397,7 +397,7 @@
       <a href="portal/portal.html" class="btn-cta-outline">
         <i class="fa fa-right-to-bracket"></i> Student Portal Login
       </a>
-      <a href="#" onclick="openStatusChecker(); return false;" class="btn-cta-ghost">
+      <a href="portal/portal.html" class="btn-cta-ghost">
         <i class="fa fa-magnifying-glass"></i> Check Application Status
       </a>
     </div>
@@ -509,7 +509,7 @@
 
     <div class="footer-bottom">
       <span>This is a student project created for academic purposes only. Not affiliated with or endorsed by the official Laguna State Polytechnic University.</span>
-      <span class="footer-bottom-stack">PHP &nbsp;·&nbsp; MySQL &nbsp;·&nbsp; Python / Flask &nbsp;·&nbsp; XAMPP</span>
+      <span class="footer-bottom-stack">HTML &nbsp;·&nbsp; CSS &nbsp;·&nbsp; JavaScript &nbsp;·&nbsp; Supabase &nbsp;·&nbsp; Vercel</span>
     </div>
   </footer>
 
@@ -637,9 +637,6 @@
 
   <script src="index.js"></script>
   <script>
-    function openStatusChecker() {
-      window.open('https://statuschecker-production.up.railway.app', '_blank');
-    }
     function openDevNote() {
       document.getElementById('devNoteModal').classList.add('active');
       document.body.style.overflow = 'hidden';
