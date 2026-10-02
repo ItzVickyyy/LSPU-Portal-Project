@@ -25,6 +25,110 @@ async function getMany(supabase, table, query = {}) {
   return data || [];
 }
 
+async function adminResource(supabase, method, body, session) {
+  requireRole(session, ['Super Admin']);
+
+  if (method === 'GET') {
+    const { data, error } = await supabase.from('admins').select('admin_id, email, first_name, last_name, role, status, created_at').order('admin_id');
+    if (error) throw error;
+    return { data: data || [] };
+  }
+
+  if (method === 'POST') {
+    const id = Number(body.admin_id);
+    if (body.action === 'create') {
+      const password = String(body.password || '');
+      if (!body.first_name || !body.last_name || !body.email || password.length < 6) {
+        const e = new Error('All fields are required and password must be at least 6 characters.');
+        e.status = 400; throw e;
+      }
+      if (!['Super Admin','Admin','Registrar'].includes(body.role)) {
+        const e = new Error('Invalid role.'); e.status = 400; throw e;
+      }
+
+      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+        email: String(body.email).trim().toLowerCase(),
+        password,
+        email_confirm: true
+      });
+      if (authError) throw authError;
+
+      const { data: admin, error } = await supabase.from('admins').insert({
+        email: String(body.email).trim().toLowerCase(),
+        password_hash: await require('bcryptjs').hash(password, 10),
+        first_name: body.first_name,
+        last_name: body.last_name,
+        role: body.role
+      }).select('admin_id, email, first_name, last_name, role, status, created_at').single();
+
+      if (error) {
+        await supabase.auth.admin.deleteUser(authUser.user.id);
+        throw error;
+      }
+
+      const { error: mapError } = await supabase.from('portal_users').insert({
+        id: authUser.user.id,
+        account_type: 'admin',
+        admin_id: admin.admin_id
+      });
+      if (mapError) {
+        await supabase.from('admins').delete().eq('admin_id', admin.admin_id);
+        await supabase.auth.admin.deleteUser(authUser.user.id);
+        throw mapError;
+      }
+      return { msg: 'Account created.', data: admin };
+    }
+
+    if (body.action === 'update_status') {
+      if (id === session.account.admin_id) {
+        const e = new Error('You cannot change your own status.'); e.status = 400; throw e;
+      }
+      if (!['Active','Inactive'].includes(body.status)) {
+        const e = new Error('Invalid status.'); e.status = 400; throw e;
+      }
+      const { error } = await supabase.from('admins').update({ status: body.status }).eq('admin_id', id);
+      if (error) throw error;
+      return { msg: 'Status updated.' };
+    }
+
+    if (body.action === 'update_role') {
+      if (id === session.account.admin_id) {
+        const e = new Error('You cannot change your own role.'); e.status = 400; throw e;
+      }
+      if (!['Super Admin','Admin','Registrar'].includes(body.role)) {
+        const e = new Error('Invalid role.'); e.status = 400; throw e;
+      }
+      const { error } = await supabase.from('admins').update({ role: body.role }).eq('admin_id', id);
+      if (error) throw error;
+      return { msg: 'Role updated.' };
+    }
+
+    if (body.action === 'reset_password') {
+      const password = String(body.password || '');
+      if (password.length < 6) {
+        const e = new Error('Password must be at least 6 characters.'); e.status = 400; throw e;
+      }
+      const { data: admin, error } = await supabase.from('admins').select('email').eq('admin_id', id).maybeSingle();
+      if (error) throw error;
+      if (!admin) {
+        const e = new Error('Admin account not found.'); e.status = 404; throw e;
+      }
+      const { data: users, error: ue } = await supabase.auth.admin.listUsers({page:1,perPage:1000});
+      if (ue) throw ue;
+      const user = (users.users || []).find(u => (u.email || '').toLowerCase() === admin.email.toLowerCase());
+      if (!user) {
+        const e = new Error('Supabase Auth account not found.'); e.status = 404; throw e;
+      }
+      const { error: pe } = await supabase.auth.admin.updateUserById(user.id, { password });
+      if (pe) throw pe;
+      const { error: le } = await supabase.from('admins').update({ password_hash: await require('bcryptjs').hash(password,10) }).eq('admin_id', id);
+      if (le) throw le;
+      return { msg: 'Password reset.' };
+    }
+  }
+  return null;
+}
+
 async function studentResource(supabase, method, body, query) {
   if (method === 'GET') {
     const id = query.id ? Number(query.id) : null;
@@ -402,6 +506,11 @@ module.exports = async function handler(req, res) {
 
     const result = await referenceResource(supabase, resource, req.method, body, query, session);
     if (result) return send(res, true, 'ok', result);
+
+    if (resource === 'admins') {
+      const result = await adminResource(supabase, req.method, body, session);
+      if (result) return send(res, true, result.msg || 'ok', result);
+    }
 
     if (resource === 'students') {
       const result = await studentResource(supabase, req.method, body, query);
