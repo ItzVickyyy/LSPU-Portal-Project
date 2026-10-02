@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const { getSupabaseAdmin, getSupabasePublic } = require('../_lib/supabase');
 
 function email(v){return String(v||'').trim().toLowerCase();}
@@ -22,8 +23,9 @@ module.exports = async function handler(req,res){
     const {data:user,error:ue}=await db.auth.admin.createUser({email:e,password,email_confirm:true});
     if(ue) throw ue;
 
+    const legacyHash = await bcrypt.hash(password, 10);
     const {data:applicant,error:ae}=await db.from('applicants').insert({
-      Email:e,password_hash:null,application_status:'Draft',
+      Email:e,password_hash:legacyHash,application_status:'Draft',
       First_Name:first,Middle_Name:middle||null,Last_Name:last,Suffix:suffix||null
     }).select('id').single();
     if(ae){await db.auth.admin.deleteUser(user.id);throw ae;}
