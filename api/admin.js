@@ -259,7 +259,7 @@ async function studentResource(supabase, method, body, query) {
         const admission = first(applicant.admission_info);
         const course = first(applicant.intended_course);
         const studentNumber = `${year}-${String(nextNumber++).padStart(4,'0')}`;
-        const { error: insertError } = await supabase.from('students').insert({
+        const { data: insertedStudent, error: insertError } = await supabase.from('students').insert({
           student_id: studentNumber,
           applicant_id: applicantId,
           first_name: applicant.First_Name,
@@ -276,8 +276,39 @@ async function studentResource(supabase, method, body, query) {
           Enrollment_Date: new Date().toISOString().slice(0,10),
           Status: 'Active',
           created_at: new Date().toISOString()
-        });
+        }).select('id').single();
         if (insertError) { failed++; errors.push(`ID ${applicantId}: ${insertError.message}`); continue; }
+
+        let yearId = null;
+        const { data: currentYear, error: yearError } = await supabase.from('year').select('year_id').eq('is_current', true).maybeSingle();
+        if (yearError) throw yearError;
+        yearId = currentYear?.year_id || null;
+        if (!yearId) {
+          const { data: latestYear, error: latestYearError } = await supabase.from('year').select('year_id').order('academic_year', { ascending: false }).limit(1).maybeSingle();
+          if (latestYearError) throw latestYearError;
+          yearId = latestYear?.year_id || null;
+        }
+        if (!yearId) {
+          await supabase.from('students').delete().eq('id', insertedStudent.id);
+          failed++;
+          errors.push(`ID ${applicantId}: No academic year configured.`);
+          continue;
+        }
+
+        const { error: enrollmentError } = await supabase.from('enrollment').insert({
+          student_id: insertedStudent.id,
+          section_id: sectionId,
+          semester_id: semesterId,
+          year_id: yearId,
+          enrollment_date: new Date().toISOString().slice(0,10),
+          status: 'Enrolled'
+        });
+        if (enrollmentError) {
+          await supabase.from('students').delete().eq('id', insertedStudent.id);
+          failed++;
+          errors.push(`ID ${applicantId}: ${enrollmentError.message}`);
+          continue;
+        }
 
         await supabase.from('applicants').update({application_status:'Enrolled'}).eq('id', applicantId);
         enrolled++;
@@ -388,6 +419,105 @@ async function applicantResource(supabase, method, body, query, session) {
   if (method === 'POST') {
     const id = Number(body.applicant_id || body.student_id);
     if (!id) return null;
+
+    if (body.action === 'update_full') {
+      const applicantId = id;
+      const applicant = {
+        Email: String(body.email || '').trim().toLowerCase(),
+        First_Name: body.first_name,
+        Middle_Name: body.middle_name || null,
+        Last_Name: body.last_name,
+        Suffix: body.suffix || null,
+        Birthdate: body.birthdate || null,
+        Birth_Place: body.birth_place || null,
+        Citizenship: body.citizenship || null,
+        Sex: body.sex || null,
+        Civil_Status: body.civil_status || null,
+        Religion: body.religion || null,
+        Disability: body.disability || null,
+        First_Generation_Student: body.first_gen || null,
+        Contact_Number: body.contact_number || null,
+        Landline_Number: body.landline_number || null,
+        House_Number: body.house_number || null,
+        Street: body.street || null,
+        Barangay: body.barangay || null,
+        Municipality: body.municipality || null,
+        Province: body.province || null,
+        Zip_Code: body.zip_code || null
+      };
+      const { error: ae } = await supabase.from('applicants').update(applicant).eq('id', applicantId);
+      if (ae) throw ae;
+
+      const { error: adErr } = await supabase.from('admission_info').upsert({
+        applicant_id: applicantId,
+        campus: body.campus,
+        student_type: body.student_type,
+        year_level: body.year_level,
+        admission_type: body.admission_type
+      }, { onConflict: 'applicant_id' });
+      if (adErr) throw adErr;
+
+      if (body.program_code) {
+        const { error: icErr } = await supabase.from('intended_course').upsert({
+          applicant_id: applicantId,
+          Program_Code: body.program_code,
+          Specialization: body.specialization || null
+        }, { onConflict: 'applicant_id' });
+        if (icErr) throw icErr;
+      }
+
+      const { error: fiErr } = await supabase.from('family_info').upsert({
+        applicant_id: applicantId,
+        guardian_first_name: body.guardian_first_name || null,
+        guardian_last_name: body.guardian_last_name || null,
+        guardian_contact_number: body.guardian_contact_number || null,
+        guardian_email: body.guardian_email || null,
+        guardian_relationship: body.guardian_relationship || null,
+        guardian_barangay: body.guardian_barangay || null,
+        guardian_municipality: body.guardian_municipality || null,
+        guardian_province: body.guardian_province || null,
+        father_first_name: body.father_first_name || null,
+        father_middle_name: body.father_middle_name || null,
+        father_last_name: body.father_last_name || null,
+        father_age: body.father_age === '' ? null : Number(body.father_age),
+        father_citizenship: body.father_citizenship || null,
+        father_educational_attainment: body.father_educational_attainment || null,
+        father_employment_status: body.father_employment_status || null,
+        father_occupation: body.father_occupation || null,
+        mother_first_name: body.mother_first_name || null,
+        mother_middle_name: body.mother_middle_name || null,
+        mother_last_name: body.mother_last_name || null,
+        mother_age: body.mother_age === '' ? null : Number(body.mother_age),
+        mother_citizenship: body.mother_citizenship || null,
+        mother_educational_attainment: body.mother_educational_attainment || null,
+        mother_employment_status: body.mother_employment_status || null,
+        mother_occupation: body.mother_occupation || null
+      }, { onConflict: 'applicant_id' });
+      if (fiErr) throw fiErr;
+
+      const { error: ebErr } = await supabase.from('educational_background').upsert({
+        applicant_id: applicantId,
+        elementary_school_name: body.elementary_school_name || null,
+        elementary_school_address: body.elementary_school_address || null,
+        elementary_type: body.elementary_type || null,
+        elementary_year_from: body.elementary_year_from === '' ? null : Number(body.elementary_year_from),
+        elementary_year_to: body.elementary_year_to === '' ? null : Number(body.elementary_year_to),
+        high_school_name: body.high_school_name || null,
+        high_school_address: body.high_school_address || null,
+        high_school_type: body.high_school_type || null,
+        high_school_year_from: body.high_school_year_from === '' ? null : Number(body.high_school_year_from),
+        high_school_year_to: body.high_school_year_to === '' ? null : Number(body.high_school_year_to),
+        senior_high_school_name: body.senior_high_school_name || null,
+        senior_high_school_address: body.senior_high_school_address || null,
+        senior_high_school_type: body.senior_high_school_type || null,
+        senior_high_school_year_from: body.senior_high_school_year_from === '' ? null : Number(body.senior_high_school_year_from),
+        senior_high_school_year_to: body.senior_high_school_year_to === '' ? null : Number(body.senior_high_school_year_to),
+        track_strand: body.track_strand || null
+      }, { onConflict: 'applicant_id' });
+      if (ebErr) throw ebErr;
+
+      return { msg: 'Applicant updated successfully.' };
+    }
 
     if (body.action === 'update_status') {
       const allowed = ['Pending', 'Draft', 'Submitted', 'Enrolled', 'Rejected'];
@@ -763,7 +893,7 @@ module.exports = async function handler(req, res) {
         active_students: students.filter(s => s.Status === 'Active').length,
         active_enrollments: enrollments.filter(e => e.status === 'Enrolled').length,
         total_revenue: payments.filter(p => p.status === 'Paid').reduce((sum, p) => sum + Number(p.amount || 0), 0),
-        recent_applicants: applicants.filter(a => a.application_status !== 'Enrolled').sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,5),
+        recent_applicants: applicants.filter(a => a.application_status !== 'Enrolled').sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,5).map(a => ({...a, name: [a.First_Name, a.Middle_Name, a.Last_Name].filter(Boolean).join(' ')})),
         status_distribution: byStatus
       };
       return send(res, true, 'ok', { data });
