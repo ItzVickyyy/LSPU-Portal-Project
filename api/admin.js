@@ -622,6 +622,25 @@ async function referenceResource(supabase, resource, method, body, query, sessio
         college_id: body.college_id ? Number(body.college_id) : null
       }).select().single();
       if (error) throw error;
+
+      const specializations = String(body.specializations || '')
+        .split(',')
+        .map(v => v.trim())
+        .filter(Boolean);
+
+      if (specializations.length) {
+        const rows = specializations.map((name, index) => ({
+          Program_Code: data.Program_Code,
+          spec_code: `${data.Program_Code}-${String(index + 1).padStart(2, '0')}`,
+          spec_name: name
+        }));
+        const { error: specError } = await supabase.from('specializations').insert(rows);
+        if (specError) {
+          await supabase.from('programs').delete().eq('Program_Code', data.Program_Code);
+          throw specError;
+        }
+      }
+
       return { data };
     }
     if (body.action === 'add_specialization') {
@@ -737,14 +756,22 @@ async function referenceResource(supabase, resource, method, body, query, sessio
     requireRole(session, ADMIN);
     if (body.action === 'create') {
       const { data, error } = await supabase.from('campus').insert({
-        Campus_Name: body.campus_name
+        Campus_Name: body.campus_name,
+        Barangay: body.barangay || null,
+        Municipality: body.municipality || null,
+        Province: body.province || null,
+        campus_email: body.campus_email || null
       }).select().single();
       if (error) throw error;
       return { data };
     }
     if (body.action === 'update') {
       const { data, error } = await supabase.from('campus').update({
-        Campus_Name: body.campus_name
+        Campus_Name: body.campus_name,
+        Barangay: body.barangay || null,
+        Municipality: body.municipality || null,
+        Province: body.province || null,
+        campus_email: body.campus_email || null
       }).eq('Campus_Id', Number(body.campus_id)).select().single();
       if (error) throw error;
       return { data };
