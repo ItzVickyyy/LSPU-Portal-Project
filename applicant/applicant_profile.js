@@ -1,146 +1,178 @@
-/* ══════════════════════════════════════════════════════════
-   STUDENT ID — stamp the hidden applicant_id fields in every
-   step form so they are ready before the user submits.
-══════════════════════════════════════════════════════════ */
-document.querySelectorAll('.js-student-id').forEach(function (el) {
-    el.value = APPLICANT_ID;
-});
+const AUTH_TOKEN_KEY = 'lspu_access_token';
 
-/* ══════════════════════════════════════════════════════════
-   PRE-FILL FORM FROM DATABASE ON PAGE LOAD
-   The page stays hidden (.hidden class) until the profile
-   fetch resolves so we never show a blank/unstyled flash.
-══════════════════════════════════════════════════════════ */
-(async function loadProfile() {
+let APPLICANT_ID = null;
+let SESSION = {};
+
+function getAccessToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+}
+
+async function authFetch(url, options = {}) {
+    const token = getAccessToken();
+    if (!token) {
+        window.location.href = '../portal/portal.html';
+        throw new Error('Not authenticated.');
+    }
+
+    const headers = new Headers(options.headers || {});
+    headers.set('Authorization', 'Bearer ' + token);
+
+    return fetch(url, { ...options, headers });
+}
+
+async function loadAuthSession() {
+    const token = getAccessToken();
+    if (!token) {
+        window.location.href = '../portal/portal.html';
+        return false;
+    }
+
+    const res = await fetch('../api/auth/session', {
+        headers: { Authorization: 'Bearer ' + token }
+    });
+
+    const data = await res.json();
+
+    if (!data.ok || data.account_type !== 'applicant' || !data.applicant_id) {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem('lspu_refresh_token');
+        window.location.href = '../portal/portal.html';
+        return false;
+    }
+
+    APPLICANT_ID = data.applicant_id;
+    SESSION = data;
+    document.querySelectorAll('.js-student-id').forEach(function (el) {
+        el.value = APPLICANT_ID;
+    });
+
+    return true;
+}
+
+(async function initializeProfile() {
     try {
-        const res  = await fetch('save_profile.php');
-        const data = await res.json();
-
-        // Reveal the page regardless of data.ok — the user
-        // still needs to see the form even on a fresh account.
-        document.getElementById('applicationPage').classList.remove('hidden');
-
-        if (!data.ok) return;
-
-        const d = data.data;
-
-        function set(name, val) {
-            if (val == null || val === '') return;
-            const strVal = String(val);
-
-            // Radio / checkbox — check the element whose value matches
-            const radios = document.querySelectorAll(
-                '[name="' + name + '"][type="radio"], [name="' + name + '"][type="checkbox"]'
-            );
-            if (radios.length > 0) {
-                radios.forEach(function (r) {
-                    if (r.value === strVal) r.checked = true;
-                });
-                return;
-            }
-
-            // Select, text, date, tel — set value on ALL matching inputs
-            document.querySelectorAll('[name="' + name + '"]').forEach(function (el) {
-                el.value = strVal;
-            });
+        if (await loadAuthSession()) {
+            await loadProfile();
         }
-
-        // Step 1 — admission
-        if (d.admission) {
-            set('campus',         d.admission.campus);
-            set('student_type',   d.admission.student_type);
-            set('year_level',     d.admission.year_level);
-            set('admission_type', d.admission.admission_type);
-        }
-
-        // Step 2 — personal info
-        if (d.applicant) {
-            const a = d.applicant;
-            set('First_Name',               a.First_Name);
-            set('Middle_Name',              a.Middle_Name);
-            set('Last_Name',                a.Last_Name);
-            set('Suffix',                   a.Suffix);
-            set('Birthdate',                a.Birthdate);
-            set('Birth_Place',              a.Birth_Place);
-            set('Citizenship',              a.Citizenship);
-            set('Sex',                      a.Sex);
-            set('Civil_Status',             a.Civil_Status);
-            set('Religion',                 a.Religion);
-            set('Disability',               a.Disability);
-            set('First_Generation_Student', a.First_Generation_Student);
-            set('Contact_Number',           a.Contact_Number);
-            set('Landline_Number',          a.Landline_Number);
-            set('Email',                    a.Email);
-            set('House_Number',             a.House_Number);
-            set('Street',                   a.Street);
-            set('Barangay',                 a.Barangay);
-            set('Municipality',             a.Municipality);
-            set('Province',                 a.Province);
-            set('Zip_Code',                 a.Zip_Code);
-        }
-
-        // Profile card — name, contact, address
-        if (d.applicant) {
-            const a  = d.applicant;
-            const mi = a.Middle_Name
-                ? a.Middle_Name.trim().charAt(0).toUpperCase() + '.'
-                : '';
-            const fullName = [a.First_Name, mi, a.Last_Name, a.Suffix]
-                .filter(Boolean).join(' ');
-
-            document.getElementById('pc-name').textContent   = fullName || '— — —';
-            document.getElementById('pc-email').textContent  = a.Email          || '';
-            document.getElementById('pc-mobile').textContent = a.Contact_Number || '';
-
-            const addr = [a.Barangay, a.Municipality, a.Province]
-                .filter(Boolean).join(', ');
-            document.getElementById('pc-address').textContent = addr || '';
-        }
-
-        // Campus label from Step 1 admission data
-        const campusMap = {
-            'Sta Cruz Campus':  'Santa Cruz Campus',
-            'Siniloan Campus':  'Siniloan Campus',
-            'San Pablo Campus': 'San Pablo City Campus',
-            'Los Banos Campus': 'Los Baños Campus',
-        };
-        if (d.admission && d.admission.campus) {
-            const label = campusMap[d.admission.campus] || d.admission.campus;
-            document.getElementById('pc-campus').textContent = label;
-        }
-
-        // Step 3 — family
-        if (d.family) {
-            Object.entries(d.family).forEach(([key, val]) => {
-                if (key === 'id' || key === 'applicant_id' || key === 'student_id') return;
-                set(key, val);
-            });
-        }
-
-        // Step 4 — education
-        if (d.education) {
-            Object.entries(d.education).forEach(([key, val]) => {
-                if (key === 'id' || key === 'applicant_id' || key === 'student_id') return;
-                set(key, val);
-            });
-        }
-
-        // Step 5 — course
-        if (d.course) {
-            const ps = document.getElementById('program-select');
-            if (ps && d.course.Program_Code) {
-                ps.value = d.course.Program_Code;
-                ps.dispatchEvent(new Event('change')); // populate specializations
-                setTimeout(() => set('Specialization', d.course.Specialization), 50);
-            }
-        }
-
     } catch (e) {
-        console.warn('Could not pre-fill profile:', e);
-        // Still reveal the page so the user can fill in the form manually.
-        document.getElementById('applicationPage').classList.remove('hidden');
+        console.warn('Could not initialize applicant profile:', e);
+        window.location.href = '../portal/portal.html';
     }
 })();
+
+async function loadProfile() {
+    const res = await authFetch('../api/applicant/profile');
+    const data = await res.json();
+
+    document.getElementById('applicationPage').classList.remove('hidden');
+
+    if (!data.ok) return;
+
+    const d = data.data;
+
+    function set(name, val) {
+        if (val == null || val === '') return;
+        const strVal = String(val);
+
+        const radios = document.querySelectorAll(
+            '[name="' + name + '"][type="radio"], [name="' + name + '"][type="checkbox"]'
+        );
+        if (radios.length > 0) {
+            radios.forEach(function (r) {
+                if (r.value === strVal) r.checked = true;
+            });
+            return;
+        }
+
+        document.querySelectorAll('[name="' + name + '"]').forEach(function (el) {
+            el.value = strVal;
+        });
+    }
+
+    if (d.admission) {
+        set('campus', d.admission.campus);
+        set('student_type', d.admission.student_type);
+        set('year_level', d.admission.year_level);
+        set('admission_type', d.admission.admission_type);
+    }
+
+    if (d.applicant) {
+        const a = d.applicant;
+        set('First_Name', a.First_Name);
+        set('Middle_Name', a.Middle_Name);
+        set('Last_Name', a.Last_Name);
+        set('Suffix', a.Suffix);
+        set('Birthdate', a.Birthdate);
+        set('Birth_Place', a.Birth_Place);
+        set('Citizenship', a.Citizenship);
+        set('Sex', a.Sex);
+        set('Civil_Status', a.Civil_Status);
+        set('Religion', a.Religion);
+        set('Disability', a.Disability);
+        set('First_Generation_Student', a.First_Generation_Student);
+        set('Contact_Number', a.Contact_Number);
+        set('Landline_Number', a.Landline_Number);
+        set('Email', a.Email);
+        set('House_Number', a.House_Number);
+        set('Street', a.Street);
+        set('Barangay', a.Barangay);
+        set('Municipality', a.Municipality);
+        set('Province', a.Province);
+        set('Zip_Code', a.Zip_Code);
+    }
+
+    if (d.applicant) {
+        const a = d.applicant;
+        const mi = a.Middle_Name
+            ? a.Middle_Name.trim().charAt(0).toUpperCase() + '.'
+            : '';
+        const fullName = [a.First_Name, mi, a.Last_Name, a.Suffix]
+            .filter(Boolean).join(' ');
+
+        document.getElementById('pc-name').textContent = fullName || '— — —';
+        document.getElementById('pc-email').textContent = a.Email || '';
+        document.getElementById('pc-mobile').textContent = a.Contact_Number || '';
+
+        const addr = [a.Barangay, a.Municipality, a.Province]
+            .filter(Boolean).join(', ');
+        document.getElementById('pc-address').textContent = addr || '';
+    }
+
+    const campusMap = {
+        'Sta Cruz Campus': 'Santa Cruz Campus',
+        'Siniloan Campus': 'Siniloan Campus',
+        'San Pablo Campus': 'San Pablo City Campus',
+        'Los Banos Campus': 'Los Baños Campus',
+    };
+
+    if (d.admission && d.admission.campus) {
+        const label = campusMap[d.admission.campus] || d.admission.campus;
+        document.getElementById('pc-campus').textContent = label;
+    }
+
+    if (d.family) {
+        Object.entries(d.family).forEach(([key, val]) => {
+            if (key === 'id' || key === 'applicant_id' || key === 'student_id') return;
+            set(key, val);
+        });
+    }
+
+    if (d.education) {
+        Object.entries(d.education).forEach(([key, val]) => {
+            if (key === 'id' || key === 'applicant_id' || key === 'student_id') return;
+            set(key, val);
+        });
+    }
+
+    if (d.course) {
+        const ps = document.getElementById('program-select');
+        if (ps && d.course.Program_Code) {
+            ps.value = d.course.Program_Code;
+            ps.dispatchEvent(new Event('change'));
+            setTimeout(() => set('Specialization', d.course.Specialization), 50);
+        }
+    }
+}
 
 /* ══════════════════════════════════════════════════════════
    ACCORDION — only one open at a time
@@ -199,7 +231,7 @@ document.querySelectorAll('form[action="save_profile.php"]').forEach(function (f
         }
 
         try {
-            const res  = await fetch('save_profile.php', { method: 'POST', body: fd });
+            const res  = await authFetch('../api/applicant/profile', { method: 'POST', body: fd });
             const data = await res.json();
             showToast(data.msg, data.ok ? 'success' : 'error');
 
@@ -281,7 +313,7 @@ programSelect.addEventListener('change', function () {
 ══════════════════════════════════════════════════════════ */
 async function refreshValidationSummary() {
     try {
-        const res  = await fetch('save_profile.php');
+        const res  = await authFetch('../api/applicant/profile');
         const data = await res.json();
         if (!data.ok) return;
         const d = data.data;
@@ -336,7 +368,7 @@ async function submitApplication(status) {
     if (status === 'Submitted') {
         // Re-validate before allowing final submit
         try {
-            const res  = await fetch('save_profile.php');
+            const res  = await authFetch('../api/applicant/profile');
             const data = await res.json();
             if (data.ok) {
                 const d       = data.data;
@@ -363,7 +395,7 @@ async function submitApplication(status) {
         fd.append('step',         'submit');
         fd.append('status',       status);
 
-        const res  = await fetch('save_profile.php', { method: 'POST', body: fd });
+        const res  = await authFetch('../api/applicant/profile', { method: 'POST', body: fd });
         const data = await res.json();
         showToast(data.msg, data.ok ? 'success' : 'error');
     } catch (e) {
@@ -377,10 +409,8 @@ async function submitApplication(status) {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-        await fetch('../api/auth.php', {
-            method: 'POST',
-            body: new URLSearchParams({ action: 'logout' }),
-        });
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem('lspu_refresh_token');
         window.location.href = '../portal/portal.html';
     });
 }
