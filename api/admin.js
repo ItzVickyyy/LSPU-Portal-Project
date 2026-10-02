@@ -185,13 +185,19 @@ async function studentResource(supabase, method, body, query) {
   if (method === 'GET') {
     const id = query.id ? Number(query.id) : null;
     if (id) {
-      const { data, error } = await supabase.from('students').select('*, applicants(*), admission_info(*), intended_course(*, programs(Program_Name)), section(section_name), semester(semester_name), family_info(*), educational_background(*)').eq('id', id).maybeSingle();
+      const { data, error } = await supabase.from('students').select('*, applicants(*, admission_info(*), intended_course(*, programs(Program_Name)), family_info(*), educational_background(*)), section(section_name), semester(semester_name)').eq('id', id).maybeSingle();
       if (error) throw error;
-      if (data?.applicants) delete data.applicants.password_hash;
+      if (data?.applicants) {
+        delete data.applicants.password_hash;
+        data.admission_info = first(data.applicants.admission_info);
+        data.intended_course = first(data.applicants.intended_course);
+        data.family_info = first(data.applicants.family_info);
+        data.educational_background = first(data.applicants.educational_background);
+      }
       return { data };
     }
 
-    let q = supabase.from('students').select('id, student_id, Status, Enrollment_Date, year_level, section_id, semester_id, applicant_id, first_name, middle_name, last_name, email, contact_number, campus, program_code, applicants(First_Name, Middle_Name, Last_Name, Email, Contact_Number), admission_info(campus), intended_course(Program_Code, programs(Program_Name)), section(section_name), semester(semester_name)').order('id', { ascending: false });
+    let q = supabase.from('students').select('id, student_id, Status, Enrollment_Date, year_level, section_id, semester_id, applicant_id, first_name, middle_name, last_name, email, contact_number, campus, program_code, applicants(First_Name, Middle_Name, Last_Name, Email, Contact_Number, admission_info(campus, year_level), intended_course(Program_Code, programs(Program_Name))), section(section_name), semester(semester_name)').order('id', { ascending: false });
     if (query.status) q = q.eq('Status', query.status);
     if (query.search) q = q.or(`student_id.ilike.%${query.search}%,first_name.ilike.%${query.search}%,last_name.ilike.%${query.search}%,email.ilike.%${query.search}%`);
     const { data, error } = await q;
@@ -202,9 +208,9 @@ async function studentResource(supabase, method, body, query) {
       full_name: [s.applicants?.First_Name || s.first_name, s.applicants?.Middle_Name || s.middle_name, s.applicants?.Last_Name || s.last_name].filter(Boolean).join(' '),
       Email: s.applicants?.Email || s.email,
       Contact_Number: s.applicants?.Contact_Number || s.contact_number,
-      campus: first(s.admission_info)?.campus || s.campus,
-      Program_Code: first(s.intended_course)?.Program_Code || s.program_code,
-      Program_Name: first(s.intended_course)?.programs?.Program_Name || null,
+      campus: first(s.applicants?.admission_info)?.campus || s.campus,
+      Program_Code: first(s.applicants?.intended_course)?.Program_Code || s.program_code,
+      Program_Name: first(s.applicants?.intended_course)?.programs?.Program_Name || null,
       section_name: s.section?.section_name || null,
       semester_name: s.semester?.semester_name || null
     }));
