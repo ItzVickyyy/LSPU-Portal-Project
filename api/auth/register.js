@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
       error: otpError
     } = await db
       .from('portal_otps')
-      .select('id')
+      .select('id, expires_at')
       .eq('purpose', 'register')
       .eq('email', e)
       .not('verified_at', 'is', null)
@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
 
     if (otpError) throw otpError;
 
-    if (!otp) {
+    if (!otp || new Date(otp.expires_at).getTime() < Date.now()) {
       return res.status(400).json({
         ok: false,
         msg: 'Please verify the registration OTP first.'
@@ -180,6 +180,13 @@ module.exports = async function handler(req, res) {
 
       throw mappingError;
     }
+
+    // Consume the verified OTP so it cannot be reused.
+    const { error: otpConsumeError } = await db
+      .from('portal_otps')
+      .delete()
+      .eq('id', otp.id);
+    if (otpConsumeError) throw otpConsumeError;
 
     // Sign the newly created user in using the public Supabase client.
     const pub = getSupabasePublic();
