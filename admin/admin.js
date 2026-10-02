@@ -3793,6 +3793,7 @@ function handleLogout() {
 
 async function confirmLogout() {
   closeModal('logout-modal');
+  await fetch('../api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => {});
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem('lspu_refresh_token');
   window.location.href = '../portal/portal.html';
