@@ -34,6 +34,7 @@ async function loadAuthSession() {
     const data = await res.json();
 
     if (!data.ok || data.account_type !== 'applicant' || !data.applicant_id) {
+        await fetch('../api/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + (localStorage.getItem(AUTH_TOKEN_KEY) || '') } }).catch(() => {});
         localStorage.removeItem(AUTH_TOKEN_KEY);
         localStorage.removeItem('lspu_refresh_token');
         window.location.href = '../portal/portal.html';
