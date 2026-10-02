@@ -3741,18 +3741,15 @@ function handleLogout() {
 
 async function confirmLogout() {
   closeModal('logout-modal');
-  try {
-    const fd = new FormData();
-    fd.append('action', 'logout');
-    await fetch('../api/auth.php', { method: 'POST', body: fd });
-  } catch (e) { /* ignore */ }
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem('lspu_refresh_token');
   window.location.href = '../portal/portal.html';
 }
 
 // ── SESSION GUARD ─────────────────────────────────────────────────────────
 (async function checkAdminSession() {
   try {
-    const res = await fetch('admin_check.php');
+    const res = await fetch('../api/admin/check', { headers: authHeaders() });
     const data = await res.json();
     if (!data.ok) {
       window.location.href = '../portal/portal.html';
