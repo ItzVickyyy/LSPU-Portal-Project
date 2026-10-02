@@ -45,7 +45,7 @@
       <a href="#campuses">Campuses</a>
       <a href="#why-lspu">Why LSPU</a>
       <a href="portal/portal.html">Portal Login</a>
-      <a href="#" onclick="openStatusChecker(); return false;">Check Status</a>
+      <a href="portal/portal.html">Check Status</a>
       <a href="portal/portal.html#page-apply-step1" class="nav-cta">Apply Now</a>
     </div>
     <button class="nav-hamburger" id="hamburger" aria-label="Open menu">
@@ -60,7 +60,7 @@
     <a href="#campuses" onclick="closeMobile()">Campuses</a>
     <a href="#why-lspu" onclick="closeMobile()">Why LSPU</a>
     <a href="portal/portal.html">Portal Login</a>
-    <a href="#" onclick="openStatusChecker(); closeMobile(); return false;">Check Application Status</a>
+    <a href="portal/portal.html">Check Application Status</a>
     <a href="portal/portal.html#page-apply-step1" class="mob-cta">Apply Now →</a>
   </div>
 
@@ -397,7 +397,7 @@
       <a href="portal/portal.html" class="btn-cta-outline">
         <i class="fa fa-right-to-bracket"></i> Student Portal Login
       </a>
-      <a href="#" onclick="openStatusChecker(); return false;" class="btn-cta-ghost">
+      <a href="portal/portal.html" class="btn-cta-ghost">
         <i class="fa fa-magnifying-glass"></i> Check Application Status
       </a>
     </div>
@@ -509,7 +509,7 @@
 
     <div class="footer-bottom">
       <span>This is a student project created for academic purposes only. Not affiliated with or endorsed by the official Laguna State Polytechnic University.</span>
-      <span class="footer-bottom-stack">PHP &nbsp;·&nbsp; MySQL &nbsp;·&nbsp; Python / Flask &nbsp;·&nbsp; XAMPP</span>
+      <span class="footer-bottom-stack">HTML &nbsp;·&nbsp; CSS &nbsp;·&nbsp; JavaScript &nbsp;·&nbsp; Supabase &nbsp;·&nbsp; Vercel</span>
     </div>
   </footer>
 
@@ -555,7 +555,6 @@
             <p>Then the formal instructions for the merged final project arrived — after the system was essentially finished. The instructions specified that the project must use <strong>Flask</strong> as the web framework, with a PC or laptop acting as the host server and a mobile phone on the same network as the client device.</p>
             <p style="margin-top:10px">The server-host and mobile-client requirements weren't a problem. The system was already designed to run locally on XAMPP, and the front-end was fully responsive from day one. That part was covered.</p>
             <p style="margin-top:10px">The Flask requirement, however, was a real conflict. The entire back-end had already been written in <strong>PHP</strong>. PHP and Flask are not interchangeable — they are fundamentally different technology stacks, and migrating from one to the other would mean rewriting the entire server-side codebase from scratch. After two to three weeks of development with the system already functioning well, that wasn't something I was willing to redo. The project already achieves every practical goal the instruction was aiming for: a local server hosting a web application accessed from a mobile device over a shared network. The framework used to serve it doesn't change what the system is or what it demonstrates.</p>
-            <p style="margin-top:10px">As a small acknowledgment of the Flask requirement, the <strong>Status Checker</strong> module was built as a standalone Python/Flask application that connects to the same database and allows applicants to look up their application status without logging in. It runs alongside the main portal.</p>
           </div>
         </div>
 
@@ -621,7 +620,7 @@
           <div class="about-proj-card">
             <div class="about-proj-icon"><i class="fa fa-database"></i></div>
             <h4>Tech Stack</h4>
-            <p>Built with <strong>PHP</strong> and <strong>MySQL</strong> on <strong>XAMPP</strong> for the main portal, with a <strong>Python / Flask</strong> microservice for the Status Checker. The front-end uses plain HTML, CSS, and JavaScript — no frameworks.</p>
+            <p>Built with plain HTML, CSS, JavaScript, Supabase, and Vercel serverless APIs. The front-end uses plain HTML, CSS, and JavaScript — no frameworks.</p>
           </div>
         </div>
 
@@ -638,9 +637,6 @@
 
   <script src="index.js"></script>
   <script>
-    function openStatusChecker() {
-      window.open('https://statuschecker-production.up.railway.app', '_blank');
-    }
     function openDevNote() {
       document.getElementById('devNoteModal').classList.add('active');
       document.body.style.overflow = 'hidden';

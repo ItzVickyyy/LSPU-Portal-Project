@@ -7,13 +7,13 @@
  * Project   : Laguna State Polytechnic University (LSPU) Enrollment System
  * Module    : Admin Dashboard
  * File      : admin.js
- * Depends on: admin_api.php  (REST-like PHP back-end endpoint)
+ * Depends on: Supabase Vercel API  (REST-like PHP back-end endpoint)
  *             admin.css      (companion stylesheet)
  *
  * OVERVIEW
  * --------
  * Single-file front-end controller for the Admin Dashboard.
- * Communicates with admin_api.php via two thin HTTP wrappers:
+ * Communicates with Supabase Vercel API via two thin HTTP wrappers:
  *   api()  – GET requests (fetches lists, detail records, dashboard stats)
  *   post() – POST/JSON requests (create, update, delete operations)
  * All dynamic content is rendered by writing HTML strings into pre-existing
@@ -81,7 +81,30 @@
  */
 
 // ── CONFIG ────────────────────────────────────────────────────────────────
-const API = 'api.php';
+const API = '../api/admin';
+const AUTH_TOKEN_KEY = 'lspu_access_token';
+
+function authHeaders(extra = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  return token ? { ...extra, Authorization: 'Bearer ' + token } : extra;
+}
+
+async function apiSession() {
+  try {
+    const res = await fetch('../api/auth/session', { headers: authHeaders() });
+    const data = await res.json();
+    if (!data.ok || data.account_type !== 'admin') {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem('lspu_refresh_token');
+      window.location.replace('../portal/portal.html');
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error('Session request failed:', error);
+    return null;
+  }
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function toast(msg, type = '') {
@@ -96,7 +119,7 @@ async function api(resource, params = {}, options = {}) {
   url.searchParams.set('resource', resource);
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, v);
   try {
-    const r = await fetch(url, options);
+    const r = await fetch(url, { ...options, headers: authHeaders(options.headers || {}) });
     const text = await r.text();
     try {
       return JSON.parse(text);
@@ -117,7 +140,7 @@ async function post(resource, body = {}) {
   try {
     const r = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body)
     });
     return await r.json();
@@ -242,7 +265,42 @@ async function initCampusDropdowns() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function ensureAdminSession() {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) {
+    window.location.replace('../portal/portal.html');
+    return false;
+  }
+
+  try {
+    const res = await fetch('../api/auth/session', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!data.ok || data.account_type !== 'admin') {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem('lspu_refresh_token');
+      window.location.replace('../portal/portal.html');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Admin session check failed:', error);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('lspu_refresh_token');
+    window.location.replace('../portal/portal.html');
+    return false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!(await ensureAdminSession())) return;
+  const sessionRes = await apiSession();
+  if (!sessionRes) return;
+  window._adminRole = sessionRes.role || 'Admin';
+  const nameEl = document.getElementById('admin-name-display');
+  if (nameEl) nameEl.textContent = sessionRes.name || 'Admin';
+  applyRoleVisibility(window._adminRole);
   // Wire nav items
   document.querySelectorAll('.nav-item[data-section]').forEach(el => {
     el.addEventListener('click', () => showSection(el.dataset.section));
@@ -3735,35 +3793,11 @@ function handleLogout() {
 
 async function confirmLogout() {
   closeModal('logout-modal');
-  try {
-    const fd = new FormData();
-    fd.append('action', 'logout');
-    await fetch('../api/auth.php', { method: 'POST', body: fd });
-  } catch (e) { /* ignore */ }
+  await fetch('../api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => {});
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem('lspu_refresh_token');
   window.location.href = '../portal/portal.html';
 }
-
-// ── SESSION GUARD ─────────────────────────────────────────────────────────
-(async function checkAdminSession() {
-  try {
-    const res = await fetch('admin_check.php');
-    const data = await res.json();
-    if (!data.ok) {
-      window.location.href = '../portal/portal.html';
-      return;
-    }
-    // Show admin name and role badge in topbar
-    if (data.admin_name) {
-      document.getElementById('admin-name-display').textContent = data.admin_name;
-    }
-    // Store role globally so nav/action guards can reference it
-    window._adminRole = data.role || 'Admin';
-    applyRoleVisibility(window._adminRole);
-  } catch (e) {
-    console.warn('admin_check.php not reachable — running in dev mode (no session guard).');
-    window._adminRole = 'Super Admin'; // dev fallback: show everything
-  }
-})();
 
 /**
  * Show/hide nav items and action buttons based on the logged-in role.

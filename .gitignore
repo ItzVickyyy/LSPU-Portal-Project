@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.*
+!.env.example
+supabase/.temp/
+
+db/schema-only.sql
+supabase/seed/

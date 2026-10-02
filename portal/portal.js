@@ -149,12 +149,35 @@ wireOtpRow('otp-row');
 wireOtpRow('rec-otp-row');
 
 /* ══════════════════════════════════════════════════════════
-   API HELPER — posts FormData to auth.php
+   API HELPER — routes authentication actions to Supabase APIs
 ══════════════════════════════════════════════════════════ */
 async function api(fields) {
-  const fd = new FormData();
-  Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
-  const res = await fetch('../api/auth.php', { method: 'POST', body: fd });
+  const action = fields.action;
+  let endpoint = '../api/auth/otp';
+
+  if (action === 'login') endpoint = '../api/auth/login';
+  else if (action === 'register') endpoint = '../api/auth/register';
+  else if (action === 'verify_otp') endpoint = '../api/auth/verify-otp';
+  else if (action === 'reset_password') endpoint = '../api/auth/reset';
+
+  const payload = { ...fields };
+
+  if (action === 'send_otp') {
+    payload.purpose = 'register';
+    delete payload.action;
+  } else if (action === 'verify_otp') {
+    payload.purpose = 'register';
+    delete payload.action;
+  } else if (action === 'reset_request') {
+    payload.purpose = 'reset';
+    delete payload.action;
+  }
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
   return res.json();
 }
 
@@ -176,12 +199,24 @@ async function doLogin() {
   btn.innerHTML = '<span class="spinner"></span>Logging in…'; btn.disabled = true;
 
   try {
-    const data = await api({ action: 'login', email, password });
+    const res = await fetch('../api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
     if (data.ok) {
+      localStorage.setItem('lspu_access_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('lspu_refresh_token', data.refresh_token);
+
       showToast('Welcome back!', 'success');
-      // Use the redirect target supplied by the server (role-aware).
-      // Falls back to applicant_profile.php if somehow absent.
-      setTimeout(() => { window.location.href = data.redirect || '../applicant/applicant_profile.php'; }, 600);
+
+      const redirect = data.account_type === 'applicant'
+        ? '../applicant/applicant_profile.html'
+        : '../admin/admin.html';
+
+      setTimeout(() => { window.location.href = redirect; }, 600);
     } else {
       showAlert('login-alert', data.msg);
     }
@@ -362,8 +397,8 @@ async function submitBasicInfo() {
 
     if (data.ok) {
       showToast('Account created! Redirecting…', 'success');
-      // Session is set server-side by auth.php; go straight to profile
-      setTimeout(() => { window.location.href = '../applicant/applicant_profile.php'; }, 800);
+      // Supabase session token is stored locally; go straight to profile
+      setTimeout(() => { window.location.href = '../applicant/applicant_profile.html'; }, 800);
     } else {
       showAlert('s3-alert', data.msg);
     }
