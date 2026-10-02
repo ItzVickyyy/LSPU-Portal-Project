@@ -81,7 +81,13 @@
  */
 
 // ── CONFIG ────────────────────────────────────────────────────────────────
-const API = 'api.php';
+const API = '../api/admin';
+const AUTH_TOKEN_KEY = 'lspu_access_token';
+
+function authHeaders(extra = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  return token ? { ...extra, Authorization: 'Bearer ' + token } : extra;
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function toast(msg, type = '') {
@@ -96,7 +102,7 @@ async function api(resource, params = {}, options = {}) {
   url.searchParams.set('resource', resource);
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') url.searchParams.set(k, v);
   try {
-    const r = await fetch(url, options);
+    const r = await fetch(url, { ...options, headers: authHeaders(options.headers || {}) });
     const text = await r.text();
     try {
       return JSON.parse(text);
@@ -117,7 +123,7 @@ async function post(resource, body = {}) {
   try {
     const r = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body)
     });
     return await r.json();
