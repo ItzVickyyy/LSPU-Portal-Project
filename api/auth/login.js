@@ -166,7 +166,7 @@ module.exports = async function handler(req, res) {
       email,
       redirect: account.account_type === 'admin'
         ? '../admin/admin.html'
-        : '../applicant/applicant_profile.php'
+        : '../applicant/applicant_profile.html'
     });
   } catch (error) {
     console.error('Auth login error:', error);
