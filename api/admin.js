@@ -28,7 +28,9 @@ async function getMany(supabase, table, query = {}) {
 async function referenceResource(supabase, resource, method, body, query, session) {
   if (method === 'GET') {
     if (resource === 'colleges') {
-      const data = await getMany(supabase, 'colleges', { order: { column: 'college_id', ascending: true } });
+      const { data: colleges, error } = await supabase.from('colleges').select('college_id, college_name, college_code, college_email, programs(count)').order('college_name');
+      if (error) throw error;
+      const data = (colleges || []).map(c => ({ ...c, program_count: c.programs?.[0]?.count || 0 }));
       return { data };
     }
     if (resource === 'campus') {
@@ -40,26 +42,26 @@ async function referenceResource(supabase, resource, method, body, query, sessio
       return { data };
     }
     if (resource === 'programs') {
-      let q = supabase.from('programs').select('*, colleges(college_name), specializations(*)').order('Program_Code', { ascending: true });
+      let q = supabase.from('programs').select('Program_Code, Program_Name, college_id, colleges(college_name), specializations(spec_code, spec_name)').order('Program_Code', { ascending: true });
       const { data, error } = await q;
       if (error) throw error;
-      return { data: data || [] };
+      return { data: (data || []).map(p => ({ ...p, college_name: p.colleges?.college_name || null, spec_count: p.specializations?.length || 0 })) };
     }
     if (resource === 'subjects') {
       let q = supabase.from('subjects').select('*, colleges(college_name)').order('Subject_Id', { ascending: true });
-      if (query.search) q = q.ilike('Subject_Name', `%${query.search}%`);
+      if (query.search) q = q.or(`Subject_Code.ilike.%${query.search}%,Subject_Name.ilike.%${query.search}%`);
       if (query.college) q = q.eq('College_Id', Number(query.college));
       const { data, error } = await q;
       if (error) throw error;
-      return { data: data || [] };
+      return { data: (data || []).map(s => ({ ...s, college_name: s.colleges?.college_name || null })) };
     }
     if (resource === 'instructors') {
       let q = supabase.from('instructors').select('*, campus(Campus_Name), colleges(college_name), subjects(Subject_Name)').order('Instructor_ID', { ascending: true });
-      if (query.search) q = q.or(`First_Name.ilike.%${query.search}%,Last_Name.ilike.%${query.search}%`);
+      if (query.search) q = q.or(`First_Name.ilike.%${query.search}%,Last_Name.ilike.%${query.search}%,Degree.ilike.%${query.search}%`);
       if (query.college) q = q.eq('College_ID', Number(query.college));
       const { data, error } = await q;
       if (error) throw error;
-      return { data: data || [] };
+      return { data: (data || []).map(i => ({ ...i, instructor_id: i.Instructor_ID, Subject_Code: i.subjects?.Subject_Code || null, Subject_Name: i.subjects?.Subject_Name || null, college_name: i.colleges?.college_name || null, Campus_Name: i.campus?.Campus_Name || null })) };
     }
   }
 
@@ -147,11 +149,20 @@ async function referenceResource(supabase, resource, method, body, query, sessio
   }
 
   if (resource === 'sections') {
+    if (method === 'GET') {
+      let q = supabase.from('section').select('section_id, section_name, year_level, program_code, programs(Program_Name), campus(Campus_Name), students(count)').order('section_name');
+      if (query.search) q = q.or(`section_name.ilike.%${query.search}%,program_code.ilike.%${query.search}%`);
+      if (query.year_level) q = q.eq('year_level', query.year_level);
+      const { data, error } = await q;
+      if (error) throw error;
+      return { data: (data || []).map(s => ({ ...s, Program_Name: s.programs?.Program_Name || null, Campus_Name: s.campus?.Campus_Name || null, student_count: s.students?.[0]?.count || 0 })) };
+    }
     requireRole(session, ADMIN);
     if (body.action === 'create') {
       const { data, error } = await supabase.from('section').insert({
         section_name: body.section_name,
         program_code: body.program_code,
+        year_level: body.year_level,
         campus_id: body.campus_id ? Number(body.campus_id) : null
       }).select().single();
       if (error) throw error;
