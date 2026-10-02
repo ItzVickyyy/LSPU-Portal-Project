@@ -54,6 +54,20 @@ Handles registrar-related portal records and operations.
 
 Applicant accounts are separate from management accounts.
 
+## Login Credentials
+
+### Registrar
+
+- Email: `registrar@gmail.com`
+- Password: `Registrar1234`
+
+### Admin
+
+- Email: `admin@gmail.com`
+- Password: `Admin1234`
+
+These credentials are included for project demonstration and testing.
+
 ## Project Structure
 
 ```text
@@ -62,15 +76,14 @@ LSPU-Portal-Project/
 ├── applicant/             # Applicant pages
 ├── api/                   # API and backend logic
 ├── assets/                # Images, fonts, and other assets
-├── portal/                # Main portal interface
-├── archive/               # Archived project files
-├── db/                    # Database files and archives
 ├── docs/                  # Project documentation
-├── supabase/              # Supabase migrations and seed data
+├── portal/                # Main portal interface
+├── supabase/              # Supabase migrations
 ├── index.html             # Landing page
 ├── index.css              # Landing page styles
 ├── index.js               # Landing page scripts
-├── Dockerfile
+├── package.json
+├── vercel.json
 └── README.md
 ```
 
@@ -100,7 +113,7 @@ https://github.com/ItzVickyyy/LSPU-Portal-Project
 
 Environment variables are required for the Supabase connection and must be configured in the deployment environment.
 
-Do not commit Supabase service-role keys, passwords, or other secrets to the repository.
+The Supabase service-role key must never be committed to the repository.
 
 ## Project Status
 
