@@ -8,9 +8,9 @@ module.exports=async function handler(req,res){
   const e=email(req.body?.email),password=String(req.body?.password||''),confirm=String(req.body?.confirm||'');
   if(!e||password.length<6||password!==confirm)return res.status(400).json({ok:false,msg:'Invalid password details.'});
   const db=getSupabaseAdmin();
-  const {data:otp,error:oe}=await db.from('portal_otps').select('id').eq('purpose','reset').eq('email',e).not('verified_at','is',null).order('verified_at',{ascending:false}).limit(1).maybeSingle();
+  const {data:otp,error:oe}=await db.from('portal_otps').select('id, expires_at').eq('purpose','reset').eq('email',e).not('verified_at','is',null).order('verified_at',{ascending:false}).limit(1).maybeSingle();
   if(oe)throw oe;
-  if(!otp)return res.status(400).json({ok:false,msg:'Please verify the reset OTP first.'});
+  if(!otp || new Date(otp.expires_at).getTime() < Date.now())return res.status(400).json({ok:false,msg:'Please verify a valid reset OTP first.'});
   const {data:users,error:ue}=await db.auth.admin.listUsers({page:1,perPage:1000});
   if(ue)throw ue;
   const user=(users.users||[]).find(u=>(u.email||'').toLowerCase()===e);
@@ -47,6 +47,9 @@ module.exports=async function handler(req,res){
       .eq('id', applicantRow.id);
     if (updateError) throw updateError;
   }
+
+  const { error: consumeError } = await db.from('portal_otps').delete().eq('id', otp.id);
+  if (consumeError) throw consumeError;
 
   return res.json({ok:true,msg:'Password reset successfully.'});
  }catch(error){console.error('Reset error:',error);return res.status(500).json({ok:false,msg:'Password reset failed.'});}
