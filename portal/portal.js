@@ -176,12 +176,24 @@ async function doLogin() {
   btn.innerHTML = '<span class="spinner"></span>Logging in…'; btn.disabled = true;
 
   try {
-    const data = await api({ action: 'login', email, password });
+    const res = await fetch('../api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
     if (data.ok) {
+      localStorage.setItem('lspu_access_token', data.access_token);
+      if (data.refresh_token) localStorage.setItem('lspu_refresh_token', data.refresh_token);
+
       showToast('Welcome back!', 'success');
-      // Use the redirect target supplied by the server (role-aware).
-      // Falls back to applicant_profile.php if somehow absent.
-      setTimeout(() => { window.location.href = data.redirect || '../applicant/applicant_profile.php'; }, 600);
+
+      const redirect = data.account_type === 'applicant'
+        ? '../applicant/applicant_profile.html'
+        : '../admin/admin.html';
+
+      setTimeout(() => { window.location.href = redirect; }, 600);
     } else {
       showAlert('login-alert', data.msg);
     }
