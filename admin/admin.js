@@ -7,13 +7,13 @@
  * Project   : Laguna State Polytechnic University (LSPU) Enrollment System
  * Module    : Admin Dashboard
  * File      : admin.js
- * Depends on: admin_api.php  (REST-like PHP back-end endpoint)
+ * Depends on: Supabase Vercel API  (REST-like PHP back-end endpoint)
  *             admin.css      (companion stylesheet)
  *
  * OVERVIEW
  * --------
  * Single-file front-end controller for the Admin Dashboard.
- * Communicates with admin_api.php via two thin HTTP wrappers:
+ * Communicates with Supabase Vercel API via two thin HTTP wrappers:
  *   api()  – GET requests (fetches lists, detail records, dashboard stats)
  *   post() – POST/JSON requests (create, update, delete operations)
  * All dynamic content is rendered by writing HTML strings into pre-existing
@@ -3763,7 +3763,7 @@ async function confirmLogout() {
     window._adminRole = data.role || 'Admin';
     applyRoleVisibility(window._adminRole);
   } catch (e) {
-    console.warn('admin_check.php not reachable — running in dev mode (no session guard).');
+    console.warn('Supabase admin session check failed.');
     window._adminRole = 'Super Admin'; // dev fallback: show everything
   }
 })();
