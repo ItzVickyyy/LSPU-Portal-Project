@@ -89,6 +89,23 @@ function authHeaders(extra = {}) {
   return token ? { ...extra, Authorization: 'Bearer ' + token } : extra;
 }
 
+async function apiSession() {
+  try {
+    const res = await fetch('../api/auth/session', { headers: authHeaders() });
+    const data = await res.json();
+    if (!data.ok || data.account_type !== 'admin') {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem('lspu_refresh_token');
+      window.location.replace('../portal/portal.html');
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error('Session request failed:', error);
+    return null;
+  }
+}
+
 // ── HELPERS ───────────────────────────────────────────────────────────────
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
@@ -278,6 +295,12 @@ async function ensureAdminSession() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!(await ensureAdminSession())) return;
+  const sessionRes = await apiSession();
+  if (!sessionRes) return;
+  window._adminRole = sessionRes.role || 'Admin';
+  const nameEl = document.getElementById('admin-name-display');
+  if (nameEl) nameEl.textContent = sessionRes.name || 'Admin';
+  applyRoleVisibility(window._adminRole);
   // Wire nav items
   document.querySelectorAll('.nav-item[data-section]').forEach(el => {
     el.addEventListener('click', () => showSection(el.dataset.section));
@@ -3774,28 +3797,6 @@ async function confirmLogout() {
   localStorage.removeItem('lspu_refresh_token');
   window.location.href = '../portal/portal.html';
 }
-
-// ── SESSION GUARD ─────────────────────────────────────────────────────────
-(async function checkAdminSession() {
-  try {
-    const res = await fetch('../api/admin/check', { headers: authHeaders() });
-    const data = await res.json();
-    if (!data.ok) {
-      window.location.href = '../portal/portal.html';
-      return;
-    }
-    // Show admin name and role badge in topbar
-    if (data.admin_name) {
-      document.getElementById('admin-name-display').textContent = data.admin_name;
-    }
-    // Store role globally so nav/action guards can reference it
-    window._adminRole = data.role || 'Admin';
-    applyRoleVisibility(window._adminRole);
-  } catch (e) {
-    console.warn('Supabase admin session check failed.');
-    window._adminRole = 'Super Admin'; // dev fallback: show everything
-  }
-})();
 
 /**
  * Show/hide nav items and action buttons based on the logged-in role.
