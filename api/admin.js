@@ -220,6 +220,73 @@ async function studentResource(supabase, method, body, query) {
   if (method === 'POST') {
     const id = Number(body.student_id);
     if (!id) return null;
+    if (body.action === 'enroll_from_applicant' || body.action === 'bulk_enroll_from_applicants') {
+      const ids = body.action === 'bulk_enroll_from_applicants'
+        ? (Array.isArray(body.applicant_ids) ? body.applicant_ids.map(Number).filter(Boolean) : [])
+        : [Number(body.applicant_id)].filter(Boolean);
+      const sectionId = Number(body.section_id);
+      const semesterId = Number(body.semester_id);
+      if (!ids.length || !sectionId || !semesterId) {
+        const e = new Error('applicant_id(s), section_id, and semester_id are required.'); e.status = 400; throw e;
+      }
+
+      const year = new Date().getFullYear();
+      const { data: existingStudents, error: existingError } = await supabase.from('students').select('student_id').like('student_id', `${year}-%`).order('student_id', {ascending:false}).limit(1);
+      if (existingError) throw existingError;
+      let nextNumber = Number(String(existingStudents?.[0]?.student_id || `${year}-0000`).split('-')[1]) + 1;
+
+      let enrolled = 0, alreadyExisted = 0, failed = 0;
+      const studentNumbers = [], errors = [];
+
+      for (const applicantId of ids) {
+        const { data: existing } = await supabase.from('students').select('id, student_id').eq('applicant_id', applicantId).maybeSingle();
+        if (existing) {
+          await supabase.from('applicants').update({application_status:'Enrolled'}).eq('id', applicantId);
+          alreadyExisted++;
+          studentNumbers.push(existing.student_id);
+          continue;
+        }
+
+        const { data: applicant, error: applicantError } = await supabase.from('applicants')
+          .select('id, Email, First_Name, Middle_Name, Last_Name, Suffix, Contact_Number, admission_info(campus, year_level), intended_course(Program_Code)')
+          .eq('id', applicantId).maybeSingle();
+        if (applicantError) throw applicantError;
+        if (!applicant) { failed++; errors.push(`ID ${applicantId}: Applicant not found.`); continue; }
+
+        const admission = first(applicant.admission_info);
+        const course = first(applicant.intended_course);
+        const studentNumber = `${year}-${String(nextNumber++).padStart(4,'0')}`;
+        const { error: insertError } = await supabase.from('students').insert({
+          student_id: studentNumber,
+          applicant_id: applicantId,
+          first_name: applicant.First_Name,
+          middle_name: applicant.Middle_Name,
+          last_name: applicant.Last_Name,
+          suffix: applicant.Suffix,
+          email: applicant.Email,
+          contact_number: applicant.Contact_Number,
+          program_code: course?.Program_Code || null,
+          campus: admission?.campus || null,
+          year_level: body.year_level || admission?.year_level || '1st Year',
+          section_id: sectionId,
+          semester_id: semesterId,
+          Enrollment_Date: new Date().toISOString().slice(0,10),
+          Status: 'Active',
+          created_at: new Date().toISOString()
+        });
+        if (insertError) { failed++; errors.push(`ID ${applicantId}: ${insertError.message}`); continue; }
+
+        await supabase.from('applicants').update({application_status:'Enrolled'}).eq('id', applicantId);
+        enrolled++;
+        studentNumbers.push(studentNumber);
+      }
+
+      return {
+        msg: `Enrollment complete: ${enrolled} new, ${alreadyExisted} already existed, ${failed} failed.`,
+        enrolled, already_existed: alreadyExisted, failed, student_numbers: studentNumbers, errors
+      };
+    }
+
     if (body.action === 'update_status') {
       const { error } = await supabase.from('students').update({ Status: body.status }).eq('id', id);
       if (error) throw error;
