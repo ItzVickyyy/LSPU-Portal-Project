@@ -565,10 +565,29 @@ async function referenceResource(supabase, resource, method, body, query, sessio
       return { data };
     }
     if (resource === 'semesters') {
-      const data = await getMany(supabase, 'semester', { order: { column: 'semester_id', ascending: false } });
-      return { data };
+      const { data, error } = await supabase
+        .from('semester')
+        .select('semester_id, semester_name, start_date, end_date, status, year_id, year(academic_year)')
+        .order('semester_id', { ascending: false });
+      if (error) throw error;
+      return {
+        data: (data || []).map(s => ({
+          ...s,
+          academic_year: s.year?.academic_year || null
+        }))
+      };
     }
     if (resource === 'programs') {
+      if (query.specializations && query.program_code) {
+        const { data, error } = await supabase
+          .from('specializations')
+          .select('id, Program_Code, spec_code, spec_name')
+          .eq('Program_Code', query.program_code)
+          .order('spec_name', { ascending: true });
+        if (error) throw error;
+        return { data: data || [] };
+      }
+
       let q = supabase.from('programs').select('Program_Code, Program_Name, college_id, colleges(college_name), specializations(spec_code, spec_name)').order('Program_Code', { ascending: true });
       const { data, error } = await q;
       if (error) throw error;
@@ -781,21 +800,75 @@ async function referenceResource(supabase, resource, method, body, query, sessio
 
   if (resource === 'semesters') {
     requireRole(session, ADMIN);
+
+    async function resolveYearId(academicYear) {
+      const value = String(academicYear || '').trim();
+      if (!value) {
+        const e = new Error('Academic year is required.');
+        e.status = 400;
+        throw e;
+      }
+
+      const { data: existing, error: findError } = await supabase
+        .from('year')
+        .select('year_id, academic_year')
+        .eq('academic_year', value)
+        .maybeSingle();
+      if (findError) throw findError;
+      if (existing) return existing.year_id;
+
+      const { data: created, error: createError } = await supabase
+        .from('year')
+        .insert({ academic_year: value, is_current: 0 })
+        .select('year_id')
+        .single();
+      if (createError) throw createError;
+      return created.year_id;
+    }
+
     if (body.action === 'create') {
-      const { data, error } = await supabase.from('semester').insert(body).select().single();
+      const yearId = await resolveYearId(body.academic_year);
+      const { data, error } = await supabase.from('semester').insert({
+        semester_name: body.semester_name,
+        start_date: body.start_date,
+        end_date: body.end_date,
+        status: body.status || 'Closed',
+        year_id: yearId
+      }).select('semester_id, semester_name, start_date, end_date, status, year_id, year(academic_year)').single();
       if (error) throw error;
-      return { data };
+      return { data: { ...data, academic_year: data.year?.academic_year || null } };
     }
+
     if (body.action === 'update') {
-      const { data, error } = await supabase.from('semester').update(body).eq('semester_id', Number(body.semester_id)).select().single();
+      const yearId = await resolveYearId(body.academic_year);
+      const { data, error } = await supabase.from('semester').update({
+        semester_name: body.semester_name,
+        start_date: body.start_date,
+        end_date: body.end_date,
+        status: body.status || 'Closed',
+        year_id: yearId
+      }).eq('semester_id', Number(body.semester_id))
+        .select('semester_id, semester_name, start_date, end_date, status, year_id, year(academic_year)')
+        .single();
       if (error) throw error;
-      return { data };
+      return { data: { ...data, academic_year: data.year?.academic_year || null } };
     }
+
     if (body.action === 'update_status') {
-      const { data, error } = await supabase.from('semester').update({ status: body.status }).eq('semester_id', Number(body.semester_id)).select().single();
+      if (!['Open', 'Closed'].includes(body.status)) {
+        const e = new Error('Invalid semester status.');
+        e.status = 400;
+        throw e;
+      }
+      const { data, error } = await supabase.from('semester')
+        .update({ status: body.status })
+        .eq('semester_id', Number(body.semester_id))
+        .select('semester_id, semester_name, start_date, end_date, status, year_id, year(academic_year)')
+        .single();
       if (error) throw error;
-      return { data };
+      return { data: { ...data, academic_year: data.year?.academic_year || null } };
     }
+
     if (body.action === 'delete') {
       const { error } = await supabase.from('semester').delete().eq('semester_id', Number(body.semester_id));
       if (error) throw error;
