@@ -25,6 +25,115 @@ async function getMany(supabase, table, query = {}) {
   return data || [];
 }
 
+async function applicantResource(supabase, method, body, query, session) {
+  if (method === 'GET') {
+    const id = query.id ? Number(query.id) : null;
+
+    if (id) {
+      const [a, ai, ic, fi, eb, log] = await Promise.all([
+        supabase.from('applicants').select('*').eq('id', id).maybeSingle(),
+        supabase.from('admission_info').select('*').eq('applicant_id', id).maybeSingle(),
+        supabase.from('intended_course').select('*, programs(Program_Name, college_id, colleges(college_name))').eq('applicant_id', id).maybeSingle(),
+        supabase.from('family_info').select('*').eq('applicant_id', id).maybeSingle(),
+        supabase.from('educational_background').select('*').eq('applicant_id', id).maybeSingle(),
+        supabase.from('applicant_status_log').select('status, changed_by, changed_at').eq('applicant_id', id).order('changed_at', { ascending: true })
+      ]);
+      for (const q of [a, ai, ic, fi, eb, log]) if (q.error) throw q.error;
+
+      const row = a.data ? { ...a.data } : null;
+      if (row) delete row.password_hash;
+      if (ai.data) Object.assign(row || {}, ai.data);
+      if (ic.data) {
+        Object.assign(row || {}, {
+          Program_Code: ic.data.Program_Code,
+          Specialization: ic.data.Specialization,
+          Program_Name: ic.data.programs?.Program_Name || null,
+          college_name: ic.data.programs?.colleges?.college_name || null
+        });
+      }
+      if (fi.data) Object.assign(row || {}, fi.data);
+      if (eb.data) Object.assign(row || {}, eb.data);
+
+      return { data: row, status_log: log.data || [] };
+    }
+
+    let q = supabase.from('applicants')
+      .select('id, Email, First_Name, Middle_Name, Last_Name, application_status, Contact_Number, Sex, created_at, admission_info(campus, year_level), intended_course(Program_Code, programs(Program_Name)), students(student_id)')
+      .neq('application_status', 'Enrolled')
+      .order('created_at', { ascending: false });
+
+    if (query.search) {
+      const term = query.search.replace(/,/g, '');
+      q = q.or(`First_Name.ilike.%${term}%,Last_Name.ilike.%${term}%,Email.ilike.%${term}%`);
+    }
+    if (query.status) q = q.eq('application_status', query.status);
+
+    const { data: raw, error } = await q;
+    if (error) throw error;
+
+    let rows = (raw || []).map(a => ({
+      id: a.id,
+      student_id: a.students?.[0]?.student_id || null,
+      full_name: [a.First_Name, a.Middle_Name, a.Last_Name].filter(Boolean).join(' '),
+      Email: a.Email,
+      application_status: a.application_status,
+      Contact_Number: a.Contact_Number,
+      Sex: a.Sex,
+      created_at: a.created_at,
+      campus: a.admission_info?.[0]?.campus || null,
+      year_level: a.admission_info?.[0]?.year_level || null,
+      Program_Code: a.intended_course?.[0]?.Program_Code || null,
+      Program_Name: a.intended_course?.[0]?.programs?.Program_Name || null
+    }));
+
+    if (query.campus) rows = rows.filter(r => r.campus === query.campus);
+    if (query.program) rows = rows.filter(r => r.Program_Code === query.program);
+    if (query.date_from) rows = rows.filter(r => String(r.created_at).slice(0, 10) >= query.date_from);
+    if (query.date_to) rows = rows.filter(r => String(r.created_at).slice(0, 10) <= query.date_to);
+
+    const { count, error: countError } = await supabase.from('applicants').select('id', { count: 'exact', head: true }).eq('application_status', 'Enrolled');
+    if (countError) throw countError;
+
+    return { data: rows, enrolled_count: count || 0 };
+  }
+
+  if (method === 'POST') {
+    const id = Number(body.applicant_id || body.student_id);
+    if (!id) return null;
+
+    if (body.action === 'update_status') {
+      const allowed = ['Pending', 'Draft', 'Submitted', 'Enrolled', 'Rejected'];
+      if (!allowed.includes(body.status)) {
+        const e = new Error('Invalid status.');
+        e.status = 400;
+        throw e;
+      }
+      const { error } = await supabase.from('applicants').update({ application_status: body.status }).eq('id', id);
+      if (error) throw error;
+      const { error: logError } = await supabase.from('applicant_status_log').insert({
+        applicant_id: id,
+        status: body.status,
+        changed_by: session.name || session.role
+      });
+      if (logError) throw logError;
+      return { msg: 'Status updated.' };
+    }
+
+    if (body.action === 'delete') {
+      const { data: student } = await supabase.from('students').select('id, student_id').eq('applicant_id', id).maybeSingle();
+      if (student) {
+        const e = new Error(`Cannot delete: this applicant has already been enrolled as a student (ID: ${student.student_id}). Remove the student record first.`);
+        e.status = 400;
+        throw e;
+      }
+      const { error } = await supabase.from('applicants').delete().eq('id', id);
+      if (error) throw error;
+      return { msg: 'Applicant deleted.' };
+    }
+  }
+  return null;
+}
+
 async function referenceResource(supabase, resource, method, body, query, session) {
   if (method === 'GET') {
     if (resource === 'colleges') {
@@ -234,6 +343,11 @@ module.exports = async function handler(req, res) {
 
     const result = await referenceResource(supabase, resource, req.method, body, query, session);
     if (result) return send(res, true, 'ok', result);
+
+    if (resource === 'applicants') {
+      const result = await applicantResource(supabase, req.method, body, query, session);
+      if (result) return send(res, true, result.msg || 'ok', result);
+    }
 
     if (resource === 'dashboard' && req.method === 'GET') {
       const [applicants, students, enrollments, payments] = await Promise.all([
