@@ -21,6 +21,20 @@ module.exports = async function handler(req, res) {
 
     if (!['register','reset'].includes(action)) return res.status(400).json({ok:false,msg:'Invalid OTP action.'});
 
+    if (action === 'register') {
+      const { data, error } = await supabase.from('applicants').select('id').eq('Email', email).maybeSingle();
+      if (error) throw error;
+      if (data) return res.status(400).json({ok:false,msg:'Email is already registered.'});
+    } else {
+      const [{ data: applicant, error: ae }, { data: admin, error: de }] = await Promise.all([
+        supabase.from('applicants').select('id').eq('Email', email).maybeSingle(),
+        supabase.from('admins').select('admin_id').eq('email', email).maybeSingle()
+      ]);
+      if (ae) throw ae;
+      if (de) throw de;
+      if (!applicant && !admin) return res.status(400).json({ok:false,msg:'Account not found.'});
+    }
+
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const hash = await bcrypt.hash(code, 10);
     const { error } = await supabase.from('portal_otps').insert({
