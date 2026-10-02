@@ -49,11 +49,10 @@ async function academicResource(supabase, resource, method, body, query) {
     if(method==='POST'&&body.action==='update'){
       const id=Number(body.grade_id);
       const vals=['class_engagement','learning_outputs','quizzes','midterm','final'].map(k=>Number(body[k]||0));
-      const total=Math.round(vals.reduce((a,b)=>a+b,0)*0.2*100)/100;
       const avg=vals.reduce((a,b)=>a+b,0)/5;
       const final_grade=avg>=99?'1.00':avg>=96?'1.25':avg>=93?'1.50':avg>=90?'1.75':avg>=87?'2.00':avg>=84?'2.25':avg>=81?'2.50':avg>=78?'2.75':avg>=75?'3.00':avg>=70?'4.0':'5.0';
-      const remarks=total>=75?'Passed':total>=70?'Conditional Failure':'Failed';
-      const {error}=await supabase.from('grades').update({class_engagement:vals[0],learning_outputs:vals[1],quizzes:vals[2],midterm:vals[3],final:vals[4],total,final_grade,remarks}).eq('grade_id',id);
+      const remarks=avg>=75?'Passed':avg>=70?'Conditional Failure':'Failed';
+      const {error}=await supabase.from('grades').update({class_engagement:vals[0],learning_outputs:vals[1],quizzes:vals[2],midterm:vals[3],final:vals[4],remarks}).eq('grade_id',id);
       if(error)throw error; return {msg:'Grade updated.'};
     }
   }
