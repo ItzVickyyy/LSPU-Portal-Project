@@ -224,8 +224,6 @@ async function studentResource(supabase, method, body, query) {
   }
 
   if (method === 'POST') {
-    const id = Number(body.student_id);
-    if (!id) return null;
     if (body.action === 'enroll_from_applicant' || body.action === 'bulk_enroll_from_applicants') {
       const ids = body.action === 'bulk_enroll_from_applicants'
         ? (Array.isArray(body.applicant_ids) ? body.applicant_ids.map(Number).filter(Boolean) : [])
@@ -292,6 +290,9 @@ async function studentResource(supabase, method, body, query) {
         enrolled, already_existed: alreadyExisted, failed, student_numbers: studentNumbers, errors
       };
     }
+
+    const id = Number(body.student_id);
+    if (!id) return null;
 
     if (body.action === 'update_status') {
       const { error } = await supabase.from('students').update({ Status: body.status }).eq('id', id);
@@ -504,8 +505,9 @@ async function referenceResource(supabase, resource, method, body, query, sessio
     requireRole(session, ADMIN);
     if (body.action === 'create') {
       const { data, error } = await supabase.from('subjects').insert({
-        Subject_Id: body.subject_id,
-        Subject_Name: body.subject_name,
+        Subject_Code: body.subject_code || null,
+        Subject_Name: body.subject_name || null,
+        Credits: body.credits === '' || body.credits === undefined ? null : Number(body.credits),
         College_Id: body.college_id ? Number(body.college_id) : null
       }).select().single();
       if (error) throw error;
@@ -525,7 +527,14 @@ async function referenceResource(supabase, resource, method, body, query, sessio
       return { data };
     }
     if (body.action === 'delete') {
-      const { error } = await supabase.from('subjects').delete().eq('Subject_Id', body.subject_id);
+      let subjectId = body.subject_id ? Number(body.subject_id) : null;
+      if (!subjectId && body.subject_code) {
+        const { data: subject, error: subjectError } = await supabase.from('subjects').select('Subject_Id').eq('Subject_Code', body.subject_code).maybeSingle();
+        if (subjectError) throw subjectError;
+        subjectId = subject?.Subject_Id || null;
+      }
+      if (!subjectId) { const e = new Error('Subject not found.'); e.status = 404; throw e; }
+      const { error } = await supabase.from('subjects').delete().eq('Subject_Id', subjectId);
       if (error) throw error;
       return {};
     }
@@ -534,7 +543,20 @@ async function referenceResource(supabase, resource, method, body, query, sessio
   if (resource === 'instructors') {
     requireRole(session, ADMIN);
     if (body.action === 'create') {
-      const { data, error } = await supabase.from('instructors').insert(body).select().single();
+      const subject = body.subject_code ? await supabase.from('subjects').select('Subject_Id').eq('Subject_Code', body.subject_code).maybeSingle() : {data:null,error:null};
+      const campus = body.campus_name ? await supabase.from('campus').select('Campus_Id').eq('Campus_Name', body.campus_name).maybeSingle() : {data:null,error:null};
+      if (subject.error) throw subject.error;
+      if (campus.error) throw campus.error;
+      const { data, error } = await supabase.from('instructors').insert({
+        First_Name: body.first_name,
+        Middle_Name: body.middle_name || null,
+        Last_Name: body.last_name,
+        Suffix_Title: body.suffix_title || null,
+        Degree: body.degree || null,
+        Subject_ID: subject.data?.Subject_Id || null,
+        College_ID: body.college_id ? Number(body.college_id) : null,
+        Campus_ID: campus.data?.Campus_Id || null
+      }).select().single();
       if (error) throw error;
       return { data };
     }
@@ -597,11 +619,14 @@ async function referenceResource(supabase, resource, method, body, query, sessio
     }
     requireRole(session, ADMIN);
     if (body.action === 'create') {
+      const campus = body.campus_name ? await supabase.from('campus').select('Campus_Id').eq('Campus_Name', body.campus_name).maybeSingle() : {data:null,error:null};
+      if (campus.error) throw campus.error;
+      if (!campus.data?.Campus_Id) { const e = new Error('Campus is required.'); e.status = 400; throw e; }
       const { data, error } = await supabase.from('section').insert({
         section_name: body.section_name,
         program_code: body.program_code,
-        year_level: body.year_level,
-        campus_id: body.campus_id ? Number(body.campus_id) : null
+        year_level: Number(body.year_level),
+        campus_id: campus.data.Campus_Id
       }).select().single();
       if (error) throw error;
       return { data };
@@ -652,17 +677,31 @@ async function referenceResource(supabase, resource, method, body, query, sessio
   if (resource === 'colleges') {
     requireRole(session, ADMIN);
     if (body.action === 'create') {
-      const { data, error } = await supabase.from('colleges').insert(body).select().single();
+      const { data, error } = await supabase.from('colleges').insert({
+        college_code: body.college_code || null,
+        college_name: body.college_name,
+        college_email: body.college_email || null
+      }).select().single();
       if (error) throw error;
       return { data };
     }
     if (body.action === 'update') {
-      const { data, error } = await supabase.from('colleges').update(body).eq('college_id', Number(body.college_id)).select().single();
+      const { data: existing, error: findError } = await supabase.from('colleges').select('college_id').eq('college_code', body.orig_code).maybeSingle();
+      if (findError) throw findError;
+      if (!existing) { const e = new Error('College not found.'); e.status = 404; throw e; }
+      const { data, error } = await supabase.from('colleges').update({
+        college_code: body.college_code || null,
+        college_name: body.college_name,
+        college_email: body.college_email || null
+      }).eq('college_id', existing.college_id).select().single();
       if (error) throw error;
       return { data };
     }
     if (body.action === 'delete') {
-      const { error } = await supabase.from('colleges').delete().eq('college_id', Number(body.college_id));
+      const { data: existing, error: findError } = await supabase.from('colleges').select('college_id').eq('college_code', body.college_code).maybeSingle();
+      if (findError) throw findError;
+      if (!existing) { const e = new Error('College not found.'); e.status = 404; throw e; }
+      const { error } = await supabase.from('colleges').delete().eq('college_id', existing.college_id);
       if (error) throw error;
       return {};
     }
