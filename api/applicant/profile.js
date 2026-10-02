@@ -139,6 +139,17 @@ module.exports = async function handler(req, res) {
       if (duplicateError) throw duplicateError;
       if (duplicate) return respond(res, false, 'That email is already in use by another account.');
 
+      const currentEmail = String(session.user.email || '').trim().toLowerCase();
+      const authEmailChanged = email !== currentEmail;
+
+      if (authEmailChanged) {
+        const { error: authEmailError } = await supabase.auth.admin.updateUserById(session.user.id, {
+          email,
+          email_confirm: true
+        });
+        if (authEmailError) throw authEmailError;
+      }
+
       const { error } = await supabase
         .from('applicants')
         .update({
@@ -166,7 +177,16 @@ module.exports = async function handler(req, res) {
         })
         .eq('id', applicantId);
 
-      if (error) throw error;
+      if (error) {
+        if (authEmailChanged) {
+          await supabase.auth.admin.updateUserById(session.user.id, {
+            email: currentEmail,
+            email_confirm: true
+          }).catch(() => {});
+        }
+        throw error;
+      }
+
       return respond(res, true, 'Step 2 saved!');
     }
 
